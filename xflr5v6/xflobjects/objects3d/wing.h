@@ -258,7 +258,9 @@ class Wing
         void exportSTLTriangle3dPrintable(QDataStream &outStreamData, QTextStream &outStreamText, bool binaryOut, Vector3d N, Vector3d Pt0, Vector3d Pt1, Vector3d Pt2, Vector3d offset);
         int stitchTopToBottomLeft(QDataStream &outStreamData, QTextStream &outStreamText, bool &binaryOut, Vector3d &N, QVector<Vector3d> &topEdge, QVector<Vector3d> &botEdge, Vector3d &offset);
         int stitchTopToBottomRight(QDataStream &outStreamData, QTextStream &outStreamText, bool &binaryOut, Vector3d &N, QVector<Vector3d> &topEdge, QVector<Vector3d> &botEdge, Vector3d &offset);
-        void generateSecondSkinPoints(QVector<Vector3d> &PtOuterTop, QVector<Vector3d> &PtOuterBot,
+        bool sortSecondSkinFoilPointsTop(Vector3d p0, Vector3d p1);
+        bool sortSecondSkinFoilPointsBottom(Vector3d p0, Vector3d p1);
+        void generateSecondSkinFoilPoints(QVector<Vector3d> &PtOuterTop, QVector<Vector3d> &PtOuterBot,
                                       QVector<Vector3d> &NormalOuterTopA, QVector<Vector3d> &NormalOuterTopB,
                                       QVector<Vector3d> &NormalOuterBotA, QVector<Vector3d> &NormalOuterBotB,
                                       QVector<Vector3d> &PtSecondTop, QVector<Vector3d> &PtSecondBot,
