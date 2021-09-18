@@ -252,9 +252,21 @@ class Wing
         bool serializeWingXFL(QDataStream &ar, bool bIsStoring);
 
         void exportSTLBinary(QDataStream &outStream, int CHORDPANELS, int SPANPANELS, float unit);
-        void Wing::exportSTLTextTriangle(QTextStream &outStream, Vector3d N, Vector3d Pt0, Vector3d Pt1, Vector3d Pt2);
+        void exportSTLTextTriangle(QTextStream &outStream, Vector3d N, Vector3d Pt0, Vector3d Pt1, Vector3d Pt2);
         void exportSTLText(QTextStream &outStream, int CHORDPANELS, int SPANPANELS);
-        void exportSTLText3dPrintable(QTextStream &outStream, int CHORDPANELS, int SPANPANELS);
+
+        void exportSTLTriangle3dPrintable(QDataStream &outStreamData, QTextStream &outStreamText, bool binaryOut, Vector3d N, Vector3d Pt0, Vector3d Pt1, Vector3d Pt2, Vector3d offset);
+        int stitchTopToBottomLeft(QDataStream &outStreamData, QTextStream &outStreamText, bool &binaryOut, Vector3d &N, QVector<Vector3d> &topEdge, QVector<Vector3d> &botEdge, Vector3d &offset);
+        int stitchTopToBottomRight(QDataStream &outStreamData, QTextStream &outStreamText, bool &binaryOut, Vector3d &N, QVector<Vector3d> &topEdge, QVector<Vector3d> &botEdge, Vector3d &offset);
+        void generateSecondSkinPoints(QVector<Vector3d> &PtOuterTop, QVector<Vector3d> &PtOuterBot,
+                                      QVector<Vector3d> &NormalOuterTopA, QVector<Vector3d> &NormalOuterTopB,
+                                      QVector<Vector3d> &NormalOuterBotA, QVector<Vector3d> &NormalOuterBotB,
+                                      QVector<Vector3d> &PtSecondTop, QVector<Vector3d> &PtSecondBot,
+                                      QVector<Vector3d> &NormalSecondTopA, QVector<Vector3d> &NormalSecondTopB,
+                                      QVector<Vector3d> &NormalSecondBotA, QVector<Vector3d> &NormalSecondBotB,
+                                      QVector<double> &skinThicknessTop, QVector<double>  &skinThicknessBot,
+                                      bool wingNotMold);
+        void exportSTL3dPrintable(QDataStream &outStreamData, QTextStream &outStreamText, bool binaryOut, int CHORDPANELS, int SPANPANELS);
 
         Foil* foil(const QString &strFoilName);
 

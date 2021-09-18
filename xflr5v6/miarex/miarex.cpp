@@ -7861,7 +7861,12 @@ void Miarex::onExporttoSTL()
         {
             if (!XFile.open(QIODevice::WriteOnly | QIODevice::Text)) return ;
             QTextStream out(&XFile);
-            pWing(STLExportDlg::s_iObject-1)->exportSTLText(out, STLExportDlg::s_NChordPanels, STLExportDlg::s_NSpanPanels);
+            //NB this needs to be re-enabled when 3dprintable is working correctly
+            //pWing(STLExportDlg::s_iObject-1)->exportSTLText(out, STLExportDlg::s_NChordPanels, STLExportDlg::s_NSpanPanels);
+
+            // 3dPrintable does both binary and text output, but requires handles to both format types
+            QDataStream outDummy;
+            pWing(STLExportDlg::s_iObject-1)->exportSTL3dPrintable(outDummy, out, bBinary, STLExportDlg::s_NChordPanels, STLExportDlg::s_NSpanPanels);
         }
     }
     else if(STLExportDlg::s_iObject==0 && m_pCurPlane->body())
