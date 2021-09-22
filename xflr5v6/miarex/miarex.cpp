@@ -7837,7 +7837,6 @@ void Miarex::onExporttoSTL()
 
 
     bool bBinary = STLExportDlg::s_bBinary;
-    bool b3dPrint = STLExportDlg::s_b3dPrint;
 
     int pos = FileName.lastIndexOf("/");
     if(pos>0) xfl::s_LastDirName = FileName.left(pos);
@@ -7850,7 +7849,7 @@ void Miarex::onExporttoSTL()
     if(STLExportDlg::s_iObject>0)
     {
 
-        if (b3dPrint == false)
+        if (STLExportDlg::s_i3dOutputStyle == 0)
         {
             qDebug() << "!b3DPrint\n";
             if(bBinary)
@@ -7879,14 +7878,28 @@ void Miarex::onExporttoSTL()
                 out.setByteOrder(QDataStream::LittleEndian);
                 QTextStream outDummy;
 
-                pWing(STLExportDlg::s_iObject-1)->exportSTL3dPrintable(out, outDummy, bBinary, STLExportDlg::s_NChordPanels, STLExportDlg::s_NSpanPanels, float(Units::mtoUnit()));
+                float nTriangles = pWing(STLExportDlg::s_iObject-1)->exportSTL3dPrintable(out, outDummy, bBinary,
+                      STLExportDlg::s_NChordPanels, STLExportDlg::s_NSpanPanels,
+                      STLExportDlg::s_i3dOutputStyle, float(Units::mtoUnit()));
+
+                // binary version of STL file requires the number of faces to be written at pos 81
+                // we didn't know what it was when the file was originally written so write it now
+                XFile.seek(81);
+                char buffer[4];
+                memcpy(buffer, &nTriangles, sizeof(uint32_t));
+                out.writeRawData(buffer, sizeof(uint32_t));
+
+
             }
             else
             {
                 if (!XFile.open(QIODevice::WriteOnly | QIODevice::Text)) return ;
                 QTextStream out(&XFile);
                 QDataStream outDummy;
-                pWing(STLExportDlg::s_iObject-1)->exportSTL3dPrintable(outDummy, out, bBinary, STLExportDlg::s_NChordPanels, STLExportDlg::s_NSpanPanels, float(Units::mtoUnit()));
+                pWing(STLExportDlg::s_iObject-1)->exportSTL3dPrintable(outDummy, out, bBinary,
+                      STLExportDlg::s_NChordPanels, STLExportDlg::s_NSpanPanels,
+                      STLExportDlg::s_i3dOutputStyle, float(Units::mtoUnit()));
+
             }
         }
     }

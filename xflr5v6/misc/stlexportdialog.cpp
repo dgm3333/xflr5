@@ -31,7 +31,7 @@
 #include <xflobjects/objects3d/plane.h>
 
 bool STLExportDlg::s_bBinary = false;
-bool STLExportDlg::s_b3dPrint = true;
+int STLExportDlg::s_i3dOutputStyle = 0;
 int STLExportDlg::s_iObject = 0;
 int STLExportDlg::s_NChordPanels = 13;
 int STLExportDlg::s_NSpanPanels = 17;
@@ -45,8 +45,10 @@ STLExportDlg::STLExportDlg()
     setLabels();
     m_prbBinary->setEnabled(true);
     m_prbASCII->setEnabled(true);
+    m_prb3dGraphic->setEnabled(true);
     m_prb3dPrintable->setEnabled(true);
-    m_prb2dPrintable->setEnabled(true);
+    m_prb2dPrintable->setEnabled(false);
+    m_prb2dMold->setEnabled(false);
 }
 
 
@@ -70,10 +72,14 @@ void STLExportDlg::setupLayout()
         {
             QHBoxLayout *pFormatPrintableLayout = new QHBoxLayout;
             {
+                m_prb3dGraphic  = new QRadioButton(tr("3D Viewable"));
                 m_prb3dPrintable  = new QRadioButton(tr("3D Printable"));
-                m_prb2dPrintable  = new QRadioButton(tr("2D Printable"));
+                m_prb2dPrintable  = new QRadioButton(tr("Ribs Only"));
+                m_prb2dMold  = new QRadioButton(tr("Mold"));
+                pFormatPrintableLayout->addWidget(m_prb3dGraphic);
                 pFormatPrintableLayout->addWidget(m_prb3dPrintable);
                 pFormatPrintableLayout->addWidget(m_prb2dPrintable);
+                pFormatPrintableLayout->addWidget(m_prb2dMold);
             }
             pExportFormatPrintable->setLayout(pFormatPrintableLayout);
         }
@@ -169,8 +175,9 @@ void STLExportDlg::initDialog(Plane *pPlane)
 
     m_prbBinary->setChecked(s_bBinary);
     m_prbASCII->setChecked(!s_bBinary);
-    m_prb3dPrintable->setChecked(s_b3dPrint);
-    m_prb2dPrintable->setChecked(!s_b3dPrint);
+    m_prb3dGraphic->setChecked(false);
+    m_prb3dPrintable->setChecked(true);
+    m_prb2dPrintable->setChecked(false);
 
     m_pieChordPanels->setValue(s_NChordPanels);
     m_pieSpanPanels->setValue(s_NSpanPanels);
@@ -193,7 +200,12 @@ void STLExportDlg::initDialog(Plane *pPlane)
 void STLExportDlg::onReadParams()
 {
     s_bBinary = m_prbBinary->isChecked();
-    s_b3dPrint = m_prb3dPrintable->isChecked();
+    if (m_prb3dGraphic->isChecked())
+        s_i3dOutputStyle = 0;
+    if (m_prb3dPrintable->isChecked())
+        s_i3dOutputStyle = 1;
+    if (m_prb2dPrintable->isChecked())
+        s_i3dOutputStyle = 2;
     s_NChordPanels = m_pieChordPanels->value();
     s_NSpanPanels  = m_pieSpanPanels->value();
     for(int i=0; i<5; i++)

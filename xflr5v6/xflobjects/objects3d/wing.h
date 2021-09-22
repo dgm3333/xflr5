@@ -263,7 +263,7 @@ class Wing
                            QVector<Vector3d> &PtTopLeft, QVector<Vector3d> &PtBotLeft,
                            QVector<Vector3d> &PtTopRight, QVector<Vector3d> &PtBotRight,
                            double tau, Vector3d &offset, float& unit);
-        int stitchSkinEdge(QDataStream &outStreamData, QTextStream &outStreamText, bool &binaryOut, bool bRightCap, bool wingNotMold,
+        int stitchSkinEdge(QDataStream &outStreamData, QTextStream &outStreamText, bool &binaryOut, bool bRightCap, int outputStyle,
                                  QVector<Vector3d> &PtPrimaryTopLeft, QVector<Vector3d> &PtPrimaryBotLeft,
                                  QVector<Vector3d> &PtPrimaryTopRight, QVector<Vector3d> &PtPrimaryBotRight,
                                  QVector<Vector3d> &PtSecondTopLeft, QVector<Vector3d> &PtSecondBotLeft,
@@ -275,8 +275,10 @@ class Wing
                                           QVector<Vector3d> &PtSecondTop, QVector<Vector3d> &NormalSecondTop,
                                           QVector<Vector3d> &PtSecondBot, QVector<Vector3d> &NormalSecondBot,
                                           QVector<double> &skinThicknessTop, QVector<double>  &skinThicknessBot,
-                                          bool wingNotMold);
-        void exportSTL3dPrintable(QDataStream &outStreamData, QTextStream &outStreamText, bool binaryOut, int CHORDPANELS, int SPANPANELS, float unit);
+                                          int outputStyle);
+        uint32_t exportSTL3dPrintable(QDataStream &outStreamData, QTextStream &outStreamText, bool binaryOut,
+                                  int CHORDPANELS, int SPANPANELS,
+                                  int outputStyle, float unit);
 
         Foil* foil(const QString &strFoilName);
 

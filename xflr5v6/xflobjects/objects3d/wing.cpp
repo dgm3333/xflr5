@@ -35,6 +35,10 @@
 bool sortSecondSkinFoilPointsTop(Vector3d p0, Vector3d p1) { return p0.x < p1.x; }
 bool sortSecondSkinFoilPointsBot(Vector3d p0, Vector3d p1) { return p0.x < p1.x; }
 
+constexpr int STDMESH = 0;
+constexpr int PRINTABLE = 1;
+constexpr int RIBSONLY = 2;
+constexpr int MOLD = 3;
 
 double Wing::s_MinPanelSize = 0.0001;
 QVector<Foil *> *Wing::s_poaFoil  = nullptr;
@@ -2829,7 +2833,6 @@ void Wing::exportSTLBinary(QDataStream &outStream, int CHORDPANELS, int SPANPANE
  */
 void Wing::exportSTLTriangle3dPrintable(QDataStream &outStreamData, QTextStream &outStreamText, bool binaryOut, Vector3d Pt0, Vector3d Pt1, Vector3d Pt2, Vector3d N, Vector3d offset, float unit)
 {
-    binaryOut = false;
     if (binaryOut) {
         short zero = 0;
         char buffer[12];
@@ -3094,7 +3097,7 @@ void Wing::generateSecondSkinFoilPoints(QVector<Vector3d> &PtPrimaryTop, QVector
                                         QVector<Vector3d> &PtSecondTop, QVector<Vector3d> &NormalSecondTop,
                                         QVector<Vector3d> &PtSecondBot, QVector<Vector3d> &NormalSecondBot,
                                         QVector<double> &skinThicknessTop, QVector<double>  &skinThicknessBot,
-                                        bool wingNotMold)
+                                        int outputStyle)
 {
 
     qDebug() << "generateSecondSkinFoilPoints\n";
@@ -3109,7 +3112,7 @@ void Wing::generateSecondSkinFoilPoints(QVector<Vector3d> &PtPrimaryTop, QVector
         // The normal for the secondary point will point in the opposite direction to it's primary counterpart
         NormalSecondTop[ic] = NormalPrimaryTop[ic];
 
-        if (wingNotMold)
+        if (outputStyle == PRINTABLE)
             NormalSecondTop[ic].reverse();    // if we're printing a wing then this is the inner skin, so the normal should point inwards
 
         // The location of the secondary point will be skinThickness * secondary normal from the primary point
@@ -3119,7 +3122,7 @@ void Wing::generateSecondSkinFoilPoints(QVector<Vector3d> &PtPrimaryTop, QVector
         // The normal for the secondary point will point in the opposite direction to it's primary counterpart
         NormalSecondBot[ic] = NormalPrimaryBot[ic];
 
-        if (wingNotMold)
+        if (outputStyle == PRINTABLE)
             NormalSecondBot[ic].reverse();    // if we're printing a wing then this is the inner skin, so the normal should point inwards
 
         // The location of the secondary point will be skinThickness * secondary normal from the primary point
@@ -3137,7 +3140,7 @@ void Wing::generateSecondSkinFoilPoints(QVector<Vector3d> &PtPrimaryTop, QVector
     std::sort(PtSecondTop.begin(), PtSecondTop.end(), sortSecondSkinFoilPointsTop);
     std::sort(PtSecondBot.begin(), PtSecondBot.end(), sortSecondSkinFoilPointsBot);
 
-    if (wingNotMold) {
+    if (outputStyle == PRINTABLE) {
         // For the secondary surface if the z value for the bottom face is above that of the top face then despite the angulation of the faces
         // the primary points are closer than the skin thickness. These points should be removed to avoid slicing errors due to the wing being non manifold
 
@@ -3305,7 +3308,7 @@ int Wing::stitchFoilFace(QDataStream &outStreamData, QTextStream &outStreamText,
  *
  *  Returns: the number of triangles written from within this process
  */
-int Wing::stitchSkinEdge(QDataStream &outStreamData, QTextStream &outStreamText, bool &binaryOut, bool bRightCap, bool wingNotMold,
+int Wing::stitchSkinEdge(QDataStream &outStreamData, QTextStream &outStreamText, bool &binaryOut, bool bRightCap, int outputStyle,
                          QVector<Vector3d> &PtPrimaryTopLeft, QVector<Vector3d> &PtPrimaryBotLeft,
                          QVector<Vector3d> &PtPrimaryTopRight, QVector<Vector3d> &PtPrimaryBotRight,
                          QVector<Vector3d> &PtSecondTopLeft, QVector<Vector3d> &PtSecondBotLeft,
@@ -3379,28 +3382,39 @@ int Wing::stitchSkinEdge(QDataStream &outStreamData, QTextStream &outStreamText,
  * This is a 3d printable wing - ie with a skin on the inside
  * The version can also generate a mold - ie with the skin on the outside and no internal features
  * @param out the instance of the QTextStream to which the output will be directed
+ * outputStyle:
+ *   0 - standard 3d viewable mesh (not coded as already exists in xflr5)
+ *   1 - generate a 3d printable wing with ribs and a skin
+ *   2 - generate just the ribs
+ *   3 - generate a mold (ie with the skin on the outside and no internal features) for casting
+ *
+ *   returns then number of faces saved to the stl
  */
-void Wing::exportSTL3dPrintable(QDataStream &outStreamData, QTextStream &outStreamText, bool binaryOut, int CHORDPANELS, int SPANPANELS, float unit)
+uint32_t Wing::exportSTL3dPrintable(QDataStream &outStreamData, QTextStream &outStreamText, bool binaryOut,
+                                int CHORDPANELS, int SPANPANELS,
+                                int outputStyle, float unit)
 {
 
 
+
+
     //Number of triangles
-    int nTriangles = m_Surface.count() * CHORDPANELS * SPANPANELS * 2 *2
+    uint32_t nTriangles = m_Surface.count() * CHORDPANELS * SPANPANELS * 2 *2
                      + 2* ((CHORDPANELS-2)*2 + 2);
 
     if (binaryOut) {
         //Use STL Binary Format Output
         /***
          *  UINT8[80] – Header
-         *     UINT32 – Number of triangles
+         *  UINT32 – Number of triangles
          *
-         *     foreach triangle
+         *  foreach triangle
          *     REAL32[3] – Normal vector
          *     REAL32[3] – Vertex 1
          *     REAL32[3] – Vertex 2
          *     REAL32[3] – Vertex 3
          *     UINT16 – Attribute byte count
-         *     end
+         *  end
         */
 
         //    80 character header, avoid word "solid" (NB appears to be one character short as requires space for the trailing \0)
@@ -3410,7 +3424,10 @@ void Wing::exportSTL3dPrintable(QDataStream &outStreamData, QTextStream &outStre
 
         // TODO: Number of triangles is clearly not going to be correct. Because it's going to be unfeasible to predict in advance
         // we will need to seek back to this location and overwrite it after all the triangles have been counted
-        outStreamData << nTriangles;
+        // this is done in miarex.cpp after the function returns
+        char buffer[4];
+        memcpy(buffer, &nTriangles, sizeof(uint32_t));
+        outStreamData.writeRawData(buffer, sizeof(uint32_t));
 
     } else {
 
@@ -3472,7 +3489,6 @@ void Wing::exportSTL3dPrintable(QDataStream &outStreamData, QTextStream &outStre
     // When working these should be moved to the dialog box code to enable user modification
     printerSize.set( 0.132, 0.074, 0.130 );       // Maximum printbounds (ie size of the printer)
 
-    bool wingNotMold = true;              // generate a wing vs a mold (ie with the skin on the outside and no internal features)
 //    bool ribsOnly = false;                // generate only ribs (useful for 2d printing or lasercutting)
 //    bool ribAlignmentMarkers = false;     // add lines on the ribs to help vertical/horizontal alignment
 
@@ -3486,7 +3502,11 @@ void Wing::exportSTL3dPrintable(QDataStream &outStreamData, QTextStream &outStre
     double ribThickness = 0.003;        // TODO: adjust the rib thickness depending on the force that each panel experiences
     QVector<double> ribLocations;       // This means use could manually set them or autospace them as desired
     double ribSpacing = 0.05;
-    double curRibSection = 0;
+
+
+    double zDivisionStep = 1.1;     // the maximum z-height of the rib is multiplied by this to allow a gap between parts.
+                                    // decrease/increase to shink/grow the gap between rib divisions
+
 
     //int numberOfRibs = (surf.spanLength()/(double)ribSpacing);
 
@@ -3496,7 +3516,7 @@ void Wing::exportSTL3dPrintable(QDataStream &outStreamData, QTextStream &outStre
 //    bool numberOfAlignmentPegs = false;    // keys will be distributed around the wing
 //    double alignmentPegClearance = 0.0f;  // how much gap to leave between hole and peg?
 
-//    bool bracingRim = false;              // (not yet implemented) generate a tubular extension to thicken the rib and support the brace cutouts
+//    bool bracingRim = false;              // (not yet implemented) generate a tubular extension at the brace hole to thicken the rib and support the brace cutouts
 //    double bracingRimHeight = 0.0f;         // how long should the tube be?
 //    double bracingRimThickness = 0.0f;      // how thick should the tube wall be?
 
@@ -3574,16 +3594,46 @@ void Wing::exportSTL3dPrintable(QDataStream &outStreamData, QTextStream &outStre
         surf.getSidePoints(xfl::TOPSURFACE, nullptr, PtPrimaryTopLeft, PtPrimaryTopRight, NormalPrimaryTopA, NormalPrimaryTopB, CHORDPANELS+1);
         surf.getSidePoints(xfl::BOTSURFACE, nullptr, PtPrimaryBotLeft, PtPrimaryBotRight, NormalPrimaryBotA, NormalPrimaryBotB, CHORDPANELS+1);
 
+
+        //it's critical the ribs are flat on the printbed or they won't stick
+        //so set all of the x-values for the left and right foils to the average value
+        //this will introduce some distortion, but if it matters could be compensated for by
+        //removing any dihedral angle before running the stl export
+        double avY = 0.0;
+        for(int ic=0; ic<=CHORDPANELS; ic++)
+        {
+            avY += PtPrimaryTopLeft[ic].y;
+            avY += PtPrimaryBotLeft[ic].y;
+        }
+        avY /= CHORDPANELS+1;
+        for(int ic=0; ic<=CHORDPANELS; ic++) {
+            PtPrimaryTopLeft[ic].y = avY;
+            PtPrimaryBotLeft[ic].y = avY;
+        }
+
+        avY = 0.0;
+        for(int ic=0; ic<=CHORDPANELS; ic++)
+        {
+            avY += PtPrimaryTopRight[ic].y;
+            avY += PtPrimaryBotRight[ic].y;
+        }
+        avY /= CHORDPANELS+1;
+        for(int ic=0; ic<=CHORDPANELS; ic++) {
+            PtPrimaryTopRight[ic].y = avY;
+            PtPrimaryBotRight[ic].y = avY;
+        }
+
+
         // Generate LHS foil
         generateSecondSkinFoilPoints(PtPrimaryTopLeft, NormalPrimaryTopA, PtPrimaryBotLeft, NormalPrimaryBotA,
                                  PtSecondTopLeft, NormalSecondTopA, PtSecondBotLeft, NormalSecondBotA,
-                                 skinThicknessTop, skinThicknessBot, wingNotMold);
+                                 skinThicknessTop, skinThicknessBot, outputStyle);
         // Generate RHS foil
         generateSecondSkinFoilPoints(PtPrimaryTopRight, NormalPrimaryTopB, PtPrimaryBotRight, NormalPrimaryBotB,
                                  PtSecondTopRight, NormalSecondTopB, PtSecondBotRight, NormalSecondBotB,
-                                 skinThicknessTop, skinThicknessBot, wingNotMold);
+                                 skinThicknessTop, skinThicknessBot, outputStyle);
 
-        if (!wingNotMold) {
+        if (outputStyle == MOLD) {
             // if we're printing a mold then the primary surface is the inner skin, so the normals should point inwards
             for(int ic=0; ic<=CHORDPANELS; ic++)
             {
@@ -3607,7 +3657,9 @@ void Wing::exportSTL3dPrintable(QDataStream &outStreamData, QTextStream &outStre
         //is=0; is<SPANPANELS
 
         double sectionRootDistanceFromWingRoot = 0;
-        double distanceFromSpanLeft = 0;
+        double distanceFromSectionLeft = 0;
+
+        double zDivisionOffset = 0;
 
         if (isRHS)
             sectionRootDistanceFromWingRoot=0.0f;              // TODO: this isn't appropriate for multi-surface wings, but will do as for initial testing
@@ -3616,18 +3668,32 @@ void Wing::exportSTL3dPrintable(QDataStream &outStreamData, QTextStream &outStre
 
 
         qDebug() << "Wing Dimensions: " << wingSpan << "," << wingSectionLength << "," << surfaceLength;
-        qDebug() << "Divisions: " << SPANPANELS << "," << spanDivisions << "," << panelsPerDivision << "," << sizePerPanel << "," << distanceFromSpanLeft << "\n";
+        qDebug() << "Divisions: " << SPANPANELS << "," << spanDivisions << "," << panelsPerDivision << "," << sizePerPanel << "," << distanceFromSectionLeft << "\n";
 
         // TODO: this will need to be modified to allow transition across multiple sections
         for(int sd=0; sd<spanDivisions; sd++)
         {
+
+            double dfslAtRibRoot = distanceFromSectionLeft;
+            double tauRR = dfslAtRibRoot / surf.m_Length;
+            double minX = PtPrimaryTopLeft[0].x * (1.0-tauRR) + PtPrimaryTopRight[0].x * tauRR;
+
+            PtPrimaryTopLeft[0].x * (1.0-tauRR) + PtPrimaryTopRight[0].x * tauRR;
+
             // each division should be placed flat on the printer bed
-            offset = { 0, -sectionRootDistanceFromWingRoot, sd*0.02 };
+            offset = { -minX, -sectionRootDistanceFromWingRoot*2, zDivisionOffset };
 
+            // calculate the z offset for the next one (since it's keeps it together doing it now than later)
+            double maxZSpan = 0;
+            for(int ic=0; ic<CHORDPANELS; ic++) {
+                double zTop = PtPrimaryTopLeft[ic].z * (1.0-tauRR) + PtPrimaryTopRight[ic].z * tauRR;
+                double zBot = PtPrimaryBotLeft[ic].z * (1.0-tauRR) + PtPrimaryBotRight[ic].z * tauRR;
+                double zSpan = zTop-zBot;
+                if (maxZSpan < zSpan)
+                    maxZSpan = zSpan;
+            }
+            zDivisionOffset += maxZSpan * zDivisionStep;
 
-
-
-            double dfslAtRibRoot = distanceFromSpanLeft;
             // generate the top and bottom surface panels
             for(int ppd=0; ppd<panelsPerDivision; ppd++)
             {
@@ -3636,10 +3702,10 @@ void Wing::exportSTL3dPrintable(QDataStream &outStreamData, QTextStream &outStre
 
                 // tau is the proportional distance along the current span
                 // uses the same A/B logic as Normals (ie A is the left face, B is the right face
-                double tauA = distanceFromSpanLeft / surf.m_Length;
+                double tauA = distanceFromSectionLeft / surf.m_Length;
                 if (tauA > 1.0)
                     break;
-                double tauB = double(distanceFromSpanLeft+sizePerPanel) / double(surf.m_Length);
+                double tauB = double(distanceFromSectionLeft+sizePerPanel) / double(surf.m_Length);
                 if (tauB > 1.0)
                     tauB = 1.0f;     // for the last division it can't be further than the full length of the span
 
@@ -3647,7 +3713,7 @@ void Wing::exportSTL3dPrintable(QDataStream &outStreamData, QTextStream &outStre
                 // TODO: this will perform incorrectly if ribThickness > sizePerPanel
                 double tauC = tauA;
                 if (ppd==0)
-                    tauC = double(distanceFromSpanLeft+ribThickness) / double(surf.m_Length);
+                    tauC = double(distanceFromSectionLeft+ribThickness) / double(surf.m_Length);
                 double tau = (tauA+tauB)/2.0;
 
 
@@ -3745,7 +3811,7 @@ void Wing::exportSTL3dPrintable(QDataStream &outStreamData, QTextStream &outStre
                     }
                 }
 
-                distanceFromSpanLeft+=sizePerPanel;
+                distanceFromSectionLeft+=sizePerPanel;
 
             }
 
@@ -3756,33 +3822,77 @@ void Wing::exportSTL3dPrintable(QDataStream &outStreamData, QTextStream &outStre
                 // uses the same A/B logic as Normals (ie A is the left face, B is the right face
                 double tauRibRoot = dfslAtRibRoot / surf.m_Length;
                 double tauRibInner = (dfslAtRibRoot + ribThickness) / surf.m_Length;
-                double tauSkinCap = distanceFromSpanLeft / surf.m_Length;
+                double tauSkinCap = distanceFromSectionLeft / surf.m_Length;
 
 
                 Vector3d ribOffset = offset;
                 ribOffset.y = -ribOffset.y;
 
-
-                // generate the rib face in contact with the printer buildplate
-                iTriangles += stitchFoilFace(outStreamData, outStreamText, binaryOut, isRHS,
-                               PtPrimaryTopLeft, PtPrimaryBotLeft, PtPrimaryTopRight, PtPrimaryBotRight,
-                               tauRibRoot, offset, unit);
-
-                // generate the rib face linking the top and bottom surfaces of the inner skin
-                iTriangles += stitchFoilFace(outStreamData, outStreamText, binaryOut, isRHS,
-                               PtSecondTopLeft, PtSecondBotLeft, PtSecondTopRight, PtSecondBotRight,
-                               tauRibInner, offset, unit);
-
-                // generate the faces linking the outer and inner edges of the skin
-                iTriangles += stitchSkinEdge(outStreamData, outStreamText, binaryOut, isRHS, wingNotMold,
-                               PtPrimaryTopLeft, PtPrimaryBotLeft, PtPrimaryTopRight, PtPrimaryBotRight,
-                               PtSecondTopLeft, PtSecondBotLeft, PtSecondTopRight, PtSecondBotRight,
-                               tauSkinCap, offset, unit);
+                if (outputStyle == PRINTABLE)
+                {
 
 
-                sectionRootDistanceFromWingRoot+=(panelsPerDivision*sizePerPanel);
+                    // How many braces penetrate this rib?
+                    int bracePenetrations = 0;
+                    for (auto& brace : braces) {
+                        // if the brace contacts the rib it will be treated as full penetration
+                        if ((brace.p0.x <= dfslAtRibRoot + ribThickness) & (brace.p1.x >= dfslAtRibRoot))
+                            bracePenetrations++;
+                    }
+
+                    if (bracePenetrations == 0) {
+                        // generate the rib face in contact with the printer buildplate
+                        iTriangles += stitchFoilFace(outStreamData, outStreamText, binaryOut, isRHS,
+                                       PtPrimaryTopLeft, PtPrimaryBotLeft, PtPrimaryTopRight, PtPrimaryBotRight,
+                                       tauRibRoot, offset, unit);
+
+                        // generate the rib face linking the top and bottom surfaces of the inner skin
+                        iTriangles += stitchFoilFace(outStreamData, outStreamText, binaryOut, isRHS,
+                                       PtSecondTopLeft, PtSecondBotLeft, PtSecondTopRight, PtSecondBotRight,
+                                       tauRibInner, offset, unit);
 
 
+                    }
+                    else
+                    {
+
+
+
+                        // We'll need to stitch to the surface of the brace
+                        float braceVertexAv = 0.0;
+                        braceVertexAv = (2*CHORDPANELS+2) / bracePenetrations;
+
+                        // TODO: for the moment we're just going to stitch top and bottom surfaces directly - will sort out the brace penetration later
+                        iTriangles += stitchFoilFace(outStreamData, outStreamText, binaryOut, isRHS,
+                                       PtPrimaryTopLeft, PtPrimaryBotLeft, PtPrimaryTopRight, PtPrimaryBotRight,
+                                       tauRibRoot, offset, unit);
+
+                        // generate the rib face linking the top and bottom surfaces of the inner skin
+                        iTriangles += stitchFoilFace(outStreamData, outStreamText, binaryOut, isRHS,
+                                       PtSecondTopLeft, PtSecondBotLeft, PtSecondTopRight, PtSecondBotRight,
+                                       tauRibInner, offset, unit);
+
+
+                    }
+
+                    // generate the faces linking the outer and inner edges of the skin
+                    iTriangles += stitchSkinEdge(outStreamData, outStreamText, binaryOut, isRHS, outputStyle,
+                                   PtPrimaryTopLeft, PtPrimaryBotLeft, PtPrimaryTopRight, PtPrimaryBotRight,
+                                   PtSecondTopLeft, PtSecondBotLeft, PtSecondTopRight, PtSecondBotRight,
+                                   tauSkinCap, offset, unit);
+
+
+                }
+                else
+                {
+
+                    // at each end there should be caps, then at each rib the rib is outside and is squared off so the mold sits flat on a surface
+                    // there should also be a wall which goes up the outer edge - in case it needs filling with something cheap to support the mold
+                    // generate a skirt outside the wing
+
+                }
+
+                sectionRootDistanceFromWingRoot+=ribSpacing; // (panelsPerDivision*sizePerPanel);
 
             }
             else {
@@ -3807,78 +3917,8 @@ void Wing::exportSTL3dPrintable(QDataStream &outStreamData, QTextStream &outStre
 
 
 
-
-    /*
-            qDebug() << ">3505<";
-
-            if (distanceFromRoot == ribLocations[curRibSection]) {
-
-                if (wingNotMold) {
-                    //We are at a rib base so create a base plate
-
-                    // How many braces penetrate this point?
-                    int bracePenetrations = 0;
-                    for (auto& brace : braces) {
-                        if ((brace.p0.xf() <= distanceFromRoot + ribThickness) & (brace.p1.xf() >= distanceFromRoot))
-                            bracePenetrations++;
-                    }
-
-                    if (bracePenetrations > 0) {
-                        // We'll need to stitch to the surface of the brace
-                        float braceVertexAv = 0.0;
-                        braceVertexAv = (2*CHORDPANELS+2) / bracePenetrations;
-
-                        // TODO: for the moment we're just going to stitch top and bottom surfaces directly - will sort out the brace penetration later
-                        if (isRHS)
-                            stitchTopToBottomRight(outStreamData, outStreamText, binaryOut, PtPrimaryTopLeft, PtPrimaryBotLeft, N, offset);
-                        else
-                            stitchTopToBottomLeft(outStreamData, outStreamText, binaryOut, PtPrimaryTopLeft, PtPrimaryBotLeft, N, offset);
-
-                    } else {
-                        // we can stitch top and bottom surfaces directly
-                        if (isRHS)
-                            stitchTopToBottomRight(outStreamData, outStreamText, binaryOut, PtPrimaryTopLeft, PtPrimaryBotLeft, N, offset);
-                        else
-                            stitchTopToBottomLeft(outStreamData, outStreamText, binaryOut, PtPrimaryTopLeft, PtPrimaryBotLeft, N, offset);
-                    }
-                } else {
-
-                    // at each end there should be caps, then at each rib the rib is outside and is squared off so the mold sits flat on a surface
-                    // there should also be a wall which goes up the outer edge - in case it needs filling with something cheap to support the mold
-                    // generate a skirt outside the wing
-
-                    // reverse all the normals for the primary foils - as they will form the inner surface rather than the outer
-                  for (auto&  n : NormalPrimaryTopA)
-                      n.reverse();
-                  for (auto&  n : NormalPrimaryTopB)
-                    n.reverse();
-                  for (auto&  n : NormalPrimaryBotA)
-                    n.reverse();
-                  for (auto&  n : NormalPrimaryBotB)
-                    n.reverse();
-
-
-                }
-            }
-
-            qDebug() << ">3557<";
-
-
-
-
-    //        qDebug() << "Number of ribs: " << surf.spanLength() << "/" << ribSpacing << " = " << numberOfRibs;
-
-    //        for (int rib=0; rib < numberOfRibs; rib++) {
-
-    //            qDebug() << "Number of SPANPANELS: " << numberOfRibs;
-
-    */
-
-
-
     // BRACING STRUTS - A cylindrical support
     // STRUT CUTOUTS - A cylindrical hole - eg to add carbon fibre tubing for support
-    // RIBS - Placed at the base of each 3d print section
 
 
     // TIPCAP
@@ -3892,6 +3932,8 @@ void Wing::exportSTL3dPrintable(QDataStream &outStreamData, QTextStream &outStre
         name.replace(" ","");
         outStreamText <<  "endsolid " + name + "\n";
     }
+
+    return nTriangles;
 }
 
 
