@@ -32,6 +32,10 @@
 #include <xflobjects/objects_global.h>
 #include <xflobjects/objects2d/polar.h>
 
+bool sortSecondSkinFoilPointsTop(Vector3d p0, Vector3d p1) { return p0.x < p1.x; }
+bool sortSecondSkinFoilPointsBot(Vector3d p0, Vector3d p1) { return p0.x < p1.x; }
+
+
 double Wing::s_MinPanelSize = 0.0001;
 QVector<Foil *> *Wing::s_poaFoil  = nullptr;
 QVector<Polar*> *Wing::s_poaPolar = nullptr;
@@ -2526,6 +2530,32 @@ void Wing::scaleTR(double newTR)
 }
 
 
+/**
+ * Generate the facet data for export to a text file in STL Format.
+ * @param out the instance of the QTextStream to which the output will be directed
+ */
+void Wing::exportSTLBinaryTriangle(QDataStream &outStreamData, Vector3d N, Vector3d Pt0, Vector3d Pt1, Vector3d Pt2, float unit)
+{
+    static short zero = 0;
+    static char buffer[12];
+
+    xfl::writeFloat(outStreamData, N.xf());
+    xfl::writeFloat(outStreamData, N.yf());
+    xfl::writeFloat(outStreamData, N.zf());
+    xfl::writeFloat(outStreamData, Pt0.xf()*unit);
+    xfl::writeFloat(outStreamData, Pt0.yf()*unit);
+    xfl::writeFloat(outStreamData, Pt0.zf()*unit);
+    xfl::writeFloat(outStreamData, Pt1.xf()*unit);
+    xfl::writeFloat(outStreamData, Pt1.yf()*unit);
+    xfl::writeFloat(outStreamData, Pt1.zf()*unit);
+    xfl::writeFloat(outStreamData, Pt2.xf()*unit);
+    xfl::writeFloat(outStreamData, Pt2.yf()*unit);
+    xfl::writeFloat(outStreamData, Pt2.zf()*unit);
+
+    memcpy(buffer, &zero, sizeof(short));
+    outStreamData.writeRawData(buffer, 2);
+
+}
 
 /**
  * Export the wing geometry to a binary file in STL Format.
@@ -2743,154 +2773,91 @@ void Wing::exportSTLBinary(QDataStream &outStream, int CHORDPANELS, int SPANPANE
             for(int ic=1; ic<CHORDPANELS-1; ic++)
             {
                 //1st triangle
-                xfl::writeFloat(outStream, N.xf());
-                xfl::writeFloat(outStream, N.yf());
-                xfl::writeFloat(outStream, N.zf());
-                xfl::writeFloat(outStream, PtBotLeft[ic].xf()*unit);
-                xfl::writeFloat(outStream, PtBotLeft[ic].yf()*unit);
-                xfl::writeFloat(outStream, PtBotLeft[ic].zf()*unit);
-                xfl::writeFloat(outStream, PtLeft[ic].xf()*unit);
-                xfl::writeFloat(outStream, PtLeft[ic].yf()*unit);
-                xfl::writeFloat(outStream, PtLeft[ic].zf()*unit);
-                xfl::writeFloat(outStream, PtLeft[ic+1].xf()*unit);
-                xfl::writeFloat(outStream, PtLeft[ic+1].yf()*unit);
-                xfl::writeFloat(outStream, PtLeft[ic+1].zf()*unit);
-                memcpy(buffer, &zero, sizeof(short));
-                outStream.writeRawData(buffer, 2);
+                exportSTLBinaryTriangle(outStream, N, PtBotLeft[ic], PtLeft[ic], PtLeft[ic+1], unit);
 
                 //2nd triangle
-                xfl::writeFloat(outStream, N.xf());
-                xfl::writeFloat(outStream, N.yf());
-                xfl::writeFloat(outStream, N.zf());
-                xfl::writeFloat(outStream, PtBotLeft[ic].xf()*unit);
-                xfl::writeFloat(outStream, PtBotLeft[ic].yf()*unit);
-                xfl::writeFloat(outStream, PtBotLeft[ic].zf()*unit);
-                xfl::writeFloat(outStream, PtLeft[ic+1].xf()*unit);
-                xfl::writeFloat(outStream, PtLeft[ic+1].yf()*unit);
-                xfl::writeFloat(outStream, PtLeft[ic+1].zf()*unit);
-                xfl::writeFloat(outStream, PtBotLeft[ic+1].xf()*unit);
-                xfl::writeFloat(outStream, PtBotLeft[ic+1].yf()*unit);
-                xfl::writeFloat(outStream, PtBotLeft[ic+1].zf()*unit);
-                memcpy(buffer, &zero, sizeof(short));
-                outStream.writeRawData(buffer, 2);
+                exportSTLBinaryTriangle(outStream, N, PtBotLeft[ic], PtLeft[ic+1], PtBotLeft[ic+1], unit);
 
                 iTriangles +=2;
             }
 
             //T.E. triangle
             int ic = CHORDPANELS-1;
-            xfl::writeFloat(outStream, N.xf());
-            xfl::writeFloat(outStream, N.yf());
-            xfl::writeFloat(outStream, N.zf());
-            xfl::writeFloat(outStream, PtBotLeft[ic].xf()*unit);
-            xfl::writeFloat(outStream, PtBotLeft[ic].yf()*unit);
-            xfl::writeFloat(outStream, PtBotLeft[ic].zf()*unit);
-            xfl::writeFloat(outStream, PtLeft[ic].xf()*unit);
-            xfl::writeFloat(outStream, PtLeft[ic].yf()*unit);
-            xfl::writeFloat(outStream, PtLeft[ic].zf()*unit);
-            xfl::writeFloat(outStream, PtBotLeft[ic+1].xf()*unit);
-            xfl::writeFloat(outStream, PtBotLeft[ic+1].yf()*unit);
-            xfl::writeFloat(outStream, PtBotLeft[ic+1].zf()*unit);
-            memcpy(buffer, &zero, sizeof(short));
-            outStream.writeRawData(buffer, 2);
+            exportSTLBinaryTriangle(outStream, N, PtBotLeft[ic], PtLeft[ic+1], PtBotLeft[ic+1], unit);
 
             iTriangles +=1;
         }
 
         if(surf.isTipRight())
         {
-            surf.getSidePoints(xfl::TOPSURFACE, nullptr, PtLeft, PtRight,
-                                           NormalA, NormalB, CHORDPANELS+1);
-            surf.getSidePoints(xfl::BOTSURFACE, nullptr, PtBotLeft, PtBotRight,
-                                           NormalA, NormalB, CHORDPANELS+1);
+            surf.getSidePoints(xfl::TOPSURFACE, nullptr, PtLeft, PtRight, NormalA, NormalB, CHORDPANELS+1);
+            surf.getSidePoints(xfl::BOTSURFACE, nullptr, PtBotLeft, PtBotRight, NormalA, NormalB, CHORDPANELS+1);
 
             N = surf.m_Normal;
             N.rotateX(-90.0);
 
             //L.E. triangle
-            xfl::writeFloat(outStream, N.xf());
-            xfl::writeFloat(outStream, N.yf());
-            xfl::writeFloat(outStream, N.zf());
-            xfl::writeFloat(outStream, PtBotRight[0].xf()*unit);
-            xfl::writeFloat(outStream, PtBotRight[0].yf()*unit);
-            xfl::writeFloat(outStream, PtBotRight[0].zf()*unit);
-            xfl::writeFloat(outStream, PtRight[1].xf()*unit);
-            xfl::writeFloat(outStream, PtRight[1].yf()*unit);
-            xfl::writeFloat(outStream, PtRight[1].zf()*unit);
-            xfl::writeFloat(outStream, PtBotRight[1].xf()*unit);
-            xfl::writeFloat(outStream, PtBotRight[1].yf()*unit);
-            xfl::writeFloat(outStream, PtBotRight[1].zf()*unit);
-            memcpy(buffer, &zero, sizeof(short));
-            outStream.writeRawData(buffer, 2);
+            exportSTLBinaryTriangle(outStream, N, PtBotRight[0], PtRight[1], PtBotRight[1], unit);
             iTriangles +=1;
 
             for(int ic=1; ic<CHORDPANELS-1; ic++)
             {
                 //1st triangle
-                xfl::writeFloat(outStream, N.xf());
-                xfl::writeFloat(outStream, N.yf());
-                xfl::writeFloat(outStream, N.zf());
-                xfl::writeFloat(outStream, PtBotRight[ic].xf()*unit);
-                xfl::writeFloat(outStream, PtBotRight[ic].yf()*unit);
-                xfl::writeFloat(outStream, PtBotRight[ic].zf()*unit);
-                xfl::writeFloat(outStream, PtRight[ic].xf()*unit);
-                xfl::writeFloat(outStream, PtRight[ic].yf()*unit);
-                xfl::writeFloat(outStream, PtRight[ic].zf()*unit);
-                xfl::writeFloat(outStream, PtRight[ic+1].xf()*unit);
-                xfl::writeFloat(outStream, PtRight[ic+1].yf()*unit);
-                xfl::writeFloat(outStream, PtRight[ic+1].zf()*unit);
-                memcpy(buffer, &zero, sizeof(short));
-                outStream.writeRawData(buffer, 2);
+                exportSTLBinaryTriangle(outStream, N, PtBotRight[ic], PtRight[ic], PtRight[ic+1], unit);
 
                 //2nd triangle
-                xfl::writeFloat(outStream, N.xf());
-                xfl::writeFloat(outStream, N.yf());
-                xfl::writeFloat(outStream, N.zf());
-                xfl::writeFloat(outStream, PtBotRight[ic].xf()*unit);
-                xfl::writeFloat(outStream, PtBotRight[ic].yf()*unit);
-                xfl::writeFloat(outStream, PtBotRight[ic].zf()*unit);
-                xfl::writeFloat(outStream, PtRight[ic+1].xf()*unit);
-                xfl::writeFloat(outStream, PtRight[ic+1].yf()*unit);
-                xfl::writeFloat(outStream, PtRight[ic+1].zf()*unit);
-                xfl::writeFloat(outStream, PtBotRight[ic+1].xf()*unit);
-                xfl::writeFloat(outStream, PtBotRight[ic+1].yf()*unit);
-                xfl::writeFloat(outStream, PtBotRight[ic+1].zf()*unit);
-
-                memcpy(buffer, &zero, sizeof(short));
-                outStream.writeRawData(buffer, 2);
+                exportSTLBinaryTriangle(outStream, N, PtBotRight[ic], PtRight[ic+1], PtBotRight[ic+1], unit);
                 iTriangles +=2;
             }
 
             //T.E. triangle
             int ic = CHORDPANELS-1;
-            xfl::writeFloat(outStream, N.xf());
-            xfl::writeFloat(outStream, N.yf());
-            xfl::writeFloat(outStream, N.zf());
-            xfl::writeFloat(outStream, PtBotRight[ic].xf()*unit);
-            xfl::writeFloat(outStream, PtBotRight[ic].yf()*unit);
-            xfl::writeFloat(outStream, PtBotRight[ic].zf()*unit);
-            xfl::writeFloat(outStream, PtRight[ic].xf()*unit);
-            xfl::writeFloat(outStream, PtRight[ic].yf()*unit);
-            xfl::writeFloat(outStream, PtRight[ic].zf()*unit);
-            xfl::writeFloat(outStream, PtBotRight[ic+1].xf()*unit);
-            xfl::writeFloat(outStream, PtBotRight[ic+1].yf()*unit);
-            xfl::writeFloat(outStream, PtBotRight[ic+1].zf()*unit);
-            memcpy(buffer, &zero, sizeof(short));
-            outStream.writeRawData(buffer, 2);
+            exportSTLBinaryTriangle(outStream, N, PtBotRight[ic], PtRight[ic], PtBotRight[ic+1], unit);
 
             iTriangles +=1;
         }
     }
     Q_ASSERT(iTriangles==nTriangles);
 
+}
 
+/**
+ * Write the facet data to a file in STL Format.
+ * bool binaryOut - whether the function stores binary or text data?
+ * &outStreamData if binaryOut then required for output (else is ignored)
+ * &outStreamText if not binaryOut then required for output (else is ignored)
+ */
+void Wing::exportSTLTriangle3dPrintable(QDataStream &outStreamData, QTextStream &outStreamText, bool binaryOut, Vector3d Pt0, Vector3d Pt1, Vector3d Pt2, Vector3d N, Vector3d offset, float unit)
+{
+    binaryOut = false;
+    if (binaryOut) {
+        short zero = 0;
+        char buffer[12];
 
-    // BRACING STRUTS - A cylindrical support
-    // STRUT CUTOUTS - A cylindrical hole - eg to add carbon fibre tubing for support
-    // RIBS - Placed at the base of each 3d print section
-    // INTERNAL BRACING
+        xfl::writeFloat(outStreamData, N.xf());
+        xfl::writeFloat(outStreamData, N.yf());
+        xfl::writeFloat(outStreamData, N.zf());
+        xfl::writeFloat(outStreamData, Pt0.xf()*unit);
+        xfl::writeFloat(outStreamData, Pt0.yf()*unit);
+        xfl::writeFloat(outStreamData, Pt0.zf()*unit);
+        xfl::writeFloat(outStreamData, Pt1.xf()*unit);
+        xfl::writeFloat(outStreamData, Pt1.yf()*unit);
+        xfl::writeFloat(outStreamData, Pt1.zf()*unit);
+        xfl::writeFloat(outStreamData, Pt2.xf()*unit);
+        xfl::writeFloat(outStreamData, Pt2.yf()*unit);
+        xfl::writeFloat(outStreamData, Pt2.zf()*unit);
+        memcpy(buffer, &zero, sizeof(short));
+        outStreamData.writeRawData(buffer, 2);
 
-
+    } else {
+        //stream the triangle
+        outStreamText << QString::asprintf("  facet normal %13.7f  %13.7f  %13.7f\n",  N.x, N.y, N.z);
+        outStreamText << "    outer loop\n";
+        outStreamText << QString::asprintf("      vertex %13.7f  %13.7f  %13.7f\n",  Pt0.x+offset.x, Pt0.y+offset.y, Pt0.z+offset.z);
+        outStreamText << QString::asprintf("      vertex %13.7f  %13.7f  %13.7f\n",  Pt1.x+offset.x, Pt1.y+offset.y, Pt1.z+offset.z);
+        outStreamText << QString::asprintf("      vertex %13.7f  %13.7f  %13.7f\n",  Pt2.x+offset.x, Pt2.y+offset.y, Pt2.z+offset.z);
+        outStreamText << "    endloop\n  endfacet\n";
+    }
 }
 
 /**
@@ -2964,9 +2931,9 @@ void Wing::exportSTLText(QTextStream &outStream, int CHORDPANELS, int SPANPANELS
     for (int j=0; j<m_Surface.size(); j++)
     {
         Surface const &surf = m_Surface.at(j);
-        //top surface
         for(int is=0; is<SPANPANELS; is++)
         {
+            //top surface
             surf.getSidePoints(xfl::TOPSURFACE, nullptr, PtLeft, PtRight, NormalA, NormalB, CHORDPANELS+1);
 
             double tauA = double(is)   / double(SPANPANELS);
@@ -2991,17 +2958,11 @@ void Wing::exportSTLText(QTextStream &outStream, int CHORDPANELS, int SPANPANELS
                 exportSTLTextTriangle(outStream, N, Pt0, Pt1, Pt2);
                 iTriangles +=2;
             }
-        }
 
-        //bottom surface
-        for(int is=0; is<SPANPANELS; is++)
-        {
+            //bottom surface
             surf.getSidePoints(xfl::BOTSURFACE, nullptr, PtLeft, PtRight,
                                            NormalA, NormalB, CHORDPANELS+1);
 
-            double tauA = double(is)   /double(SPANPANELS);
-            double tauB = double(is+1) /double(SPANPANELS);
-            double tau = (tauA+tauB)/2.0;
             for(int ic=0; ic<CHORDPANELS; ic++)
             {
                 //left side vertices
@@ -3088,158 +3049,46 @@ void Wing::exportSTLText(QTextStream &outStream, int CHORDPANELS, int SPANPANELS
 
     Q_ASSERT(iTriangles==nTriangles);
 
-
-    // BRACING STRUTS - A cylindrical support
-    // STRUT CUTOUTS - A cylindrical hole - eg to add carbon fibre tubing for support
-    // RIBS - Placed at the base of each 3d print section
-    // INTERNAL BRACING
-
-
-
-
     strong = "endsolid " + name + "\n";
     outStream << strong;
 }
 
 
-/**
- * Write the facet data to a file in STL Format.
- * bool binaryOut - whether the function stores binary or text data?
- * &outStreamData if binaryOut then required for output (else is ignored)
- * &outStreamText if not binaryOut then required for output (else is ignored)
- */
-void Wing::exportSTLTriangle3dPrintable(QDataStream &outStreamData, QTextStream &outStreamText, bool binaryOut, Vector3d N, Vector3d Pt0, Vector3d Pt1, Vector3d Pt2, Vector3d offset)
+
+Vector3d Wing::foilXZIntersection(Vector3d A, Vector3d B, Vector3d C, Vector3d D)
 {
+    // Line AB represented as a1x + b1z = c1
+    double a1 = B.z - A.z;
+    double b1 = A.x - B.x;
+    double c1 = a1*(A.x) + b1*(A.z);
 
+    // Line CD represented as a2x + b2z = c2
+    double a2 = D.z - C.z;
+    double b2 = C.x - D.x;
+    double c2 = a2*(C.x)+ b2*(C.z);
 
+    double determinant = a1*b2 - a2*b1;
 
-    if (binaryOut) {
-        short zero = 0;
-        char buffer[12];
-
-        xfl::writeFloat(outStreamData, N.xf());
-        xfl::writeFloat(outStreamData, N.yf());
-        xfl::writeFloat(outStreamData, N.zf());
-        xfl::writeFloat(outStreamData, Pt0.xf());
-        xfl::writeFloat(outStreamData, Pt0.yf());
-        xfl::writeFloat(outStreamData, Pt0.zf());
-        xfl::writeFloat(outStreamData, Pt1.xf());
-        xfl::writeFloat(outStreamData, Pt1.yf());
-        xfl::writeFloat(outStreamData, Pt1.zf());
-        xfl::writeFloat(outStreamData, Pt2.xf());
-        xfl::writeFloat(outStreamData, Pt2.yf());
-        xfl::writeFloat(outStreamData, Pt2.zf());
-        memcpy(buffer, &zero, sizeof(short));
-        outStreamData.writeRawData(buffer, 2);
-
-    } else {
-        //stream the triangle
-        outStreamText << QString::asprintf("  facet normal %13.7f  %13.7f  %13.7f\n",  N.x, N.y, N.z);
-        outStreamText << "    outer loop\n";
-        outStreamText << QString::asprintf("      vertex %13.7f  %13.7f  %13.7f\n",  Pt0.x, Pt0.y, Pt0.z);
-        outStreamText << QString::asprintf("      vertex %13.7f  %13.7f  %13.7f\n",  Pt1.x, Pt1.y, Pt1.z);
-        outStreamText << QString::asprintf("      vertex %13.7f  %13.7f  %13.7f\n",  Pt2.x, Pt2.y, Pt2.z);
-        outStreamText << "    endloop\n  endfacet\n";
-    }
-}
-
-/**
- * Write the facet data to a file in STL Format.
- * bool binaryOut - whether the function stores binary or text data?
- * &outStreamData if binaryOut then required for output (else is ignored)
- * &outStreamText if not binaryOut then required for output (else is ignored)
- *
- * Because stl files expect the vertices to be ordered clockwise when facing from the direction of the normal
- *    there is a Left and a Right version of this function.
- *
- *  Returns: the number of triangles written from within this process
- */
-int Wing::stitchTopToBottomLeft(QDataStream &outStreamData, QTextStream &outStreamText, bool &binaryOut,
-                                Vector3d &N, QVector<Vector3d> &topEdge, QVector<Vector3d> &botEdge, Vector3d &offset) {
-    //for RIBS and TIP PATCHES
-
-    int iTriangles = 0;
-
-    N.rotateX(-90.0);
-
-    //Leading Edge triangle
-    exportSTLTriangle3dPrintable(outStreamData, outStreamText, binaryOut, N, botEdge[0], topEdge[1], botEdge[1], offset);
-
-    iTriangles +=1;
-
-    for(int ic=1; ic<topEdge.size()-1; ic++)
+    if (determinant == 0)
     {
-        //1st triangle
-        exportSTLTriangle3dPrintable(outStreamData, outStreamText, binaryOut, N, botEdge[ic], topEdge[ic], botEdge[ic+1], offset);
-
-        //2nd triangle
-        exportSTLTriangle3dPrintable(outStreamData, outStreamText, binaryOut, N, botEdge[ic+1], topEdge[ic], topEdge[ic+1], offset);
-        iTriangles +=2;
+        // The lines are parallel. This is simplified
+        // by returning a pair of FLT_MAX
+        return {FLT_MAX, FLT_MAX, FLT_MAX};
     }
-    //Trailing Edge triangle
-    int ic = topEdge.size()-1;
-    exportSTLTriangle3dPrintable(outStreamData, outStreamText, binaryOut, N, botEdge[ic], topEdge[ic], botEdge[ic+1], offset);
-    iTriangles +=1;
-
-    return iTriangles;
-
-}
-
-/**
- * Write the facet data to a file in STL Format.
- * bool binaryOut - whether the function stores binary or text data?
- * &outStreamData if binaryOut then required for output (else is ignored)
- * &outStreamText if not binaryOut then required for output (else is ignored)
- *
- * Because stl files expect the vertices to be ordered clockwise when facing from the direction of the normal
- *    there is a Left and a Right version of this function.
- *
- *  Returns: the number of triangles written from within this process
- */
-int Wing::stitchTopToBottomRight(QDataStream &outStreamData, QTextStream &outStreamText, bool &binaryOut,
-                                Vector3d &N, QVector<Vector3d> &topEdge, QVector<Vector3d> &botEdge, Vector3d &offset) {
-    //for RIBS and TIP PATCHES
-
-    int iTriangles = 0;
-
-    N.rotateX(90.0);
-
-    //Leading Edge triangle
-    exportSTLTriangle3dPrintable(outStreamData, outStreamText, binaryOut, N, botEdge[0], topEdge[1], botEdge[1], offset);
-    iTriangles +=1;
-
-    for(int ic=1; ic<topEdge.size()-1; ic++)
+    else
     {
-        //1st triangle
-        exportSTLTriangle3dPrintable(outStreamData, outStreamText, binaryOut, N, botEdge[ic], topEdge[ic], botEdge[ic+1], offset);
-        //2nd triangle
-        exportSTLTriangle3dPrintable(outStreamData, outStreamText, binaryOut, N, botEdge[ic+1], topEdge[ic], topEdge[ic+1], offset);
-        iTriangles +=2;
+        double x = (b2*c1 - b1*c2)/determinant;
+        double z = (a1*c2 - a2*c1)/determinant;
+        return {x, 0, z};
     }
-    //Trailing Edge triangle
-    int ic = topEdge.size()-1;
-    exportSTLTriangle3dPrintable(outStreamData, outStreamText, binaryOut, N, botEdge[ic], topEdge[ic], botEdge[ic+1], offset);
-
-    iTriangles +=1;
-
-    return iTriangles;
-
 }
 
-
-bool Wing::sortSecondSkinFoilPointsTop(Vector3d p0, Vector3d p1) {
-    // y is chordwise, x is spanwise
-    // xflr expects sorting to
-    return true;
-}
-bool Wing::sortSecondSkinFoilPointsBottom(Vector3d p0, Vector3d p1) {
-    // y is chordwise, x is spanwise
-    // xflr expects sorting to
-    return true;
-}
-
-
-
+// foils are composed of vertices (in xflr5 generally called points) with a normal vector
+// xflr5 widely uses a vector3d class, and uses two of these vectors for the originating vertex location
+//   and it's associated normal.
+// these seem to be named left/right for the points  and A/B for the respective normals and are generally separated into top/bottom
+// these are then stored in vectors (the c array version) running from trailing edge to leading edge
+// TODO needs checking whether top is reversed (as surface.h implies)
 void Wing::generateSecondSkinFoilPoints(QVector<Vector3d> &PtPrimaryTop, QVector<Vector3d> &NormalPrimaryTop,
                                         QVector<Vector3d> &PtPrimaryBot, QVector<Vector3d> &NormalPrimaryBot,
                                         QVector<Vector3d> &PtSecondTop, QVector<Vector3d> &NormalSecondTop,
@@ -3248,15 +3097,18 @@ void Wing::generateSecondSkinFoilPoints(QVector<Vector3d> &PtPrimaryTop, QVector
                                         bool wingNotMold)
 {
 
-    int chordPanels = NormalPrimaryTop.size()-1;
+    qDebug() << "generateSecondSkinFoilPoints\n";
 
-    for(int ic=0; ic<=chordPanels; ic++)
+    qDebug() << NormalPrimaryTop.size() << "\n";
+    for(int ic=0; ic<NormalPrimaryTop.size(); ic++)
     {
         // Get the initial point locations for the secondary surface
-
+        // correct the normals for both skins
+        //qDebug() << ic;
         //top
         // The normal for the secondary point will point in the opposite direction to it's primary counterpart
         NormalSecondTop[ic] = NormalPrimaryTop[ic];
+
         if (wingNotMold)
             NormalSecondTop[ic].reverse();    // if we're printing a wing then this is the inner skin, so the normal should point inwards
 
@@ -3266,33 +3118,260 @@ void Wing::generateSecondSkinFoilPoints(QVector<Vector3d> &PtPrimaryTop, QVector
         // bot
         // The normal for the secondary point will point in the opposite direction to it's primary counterpart
         NormalSecondBot[ic] = NormalPrimaryBot[ic];
+
         if (wingNotMold)
             NormalSecondBot[ic].reverse();    // if we're printing a wing then this is the inner skin, so the normal should point inwards
 
         // The location of the secondary point will be skinThickness * secondary normal from the primary point
         PtSecondBot[ic] = PtPrimaryBot[ic] + NormalSecondBot[ic] * skinThicknessBot[ic];
 
-        if (wingNotMold) {
-            // For the secondary surface if the z value for the bottom face is above that of the top face then despite the angulation of the faces
-            // the primary points are closer than the skin thickness. These points should be removed to avoid slicing errors due to the wing being non manifold
-            // this check isn't done if a mold is being created as the top and bottom skins can't intersect.
+//        qDebug() << "Top1->2 {" << PtPrimaryTop[ic].x << "," << PtPrimaryTop[ic].y << "," << PtPrimaryTop[ic].z
+//               << "}\n        {" << PtSecondTop[ic].x << "," << PtSecondTop[ic].y << "," << PtSecondTop[ic].z << "}";
+//        qDebug() << "Bot1->2 {" << PtPrimaryBot[ic].x << "," << PtPrimaryBot[ic].y << "," << PtPrimaryBot[ic].z
+//               << "}\n        {" << PtSecondBot[ic].x << "," << PtSecondBot[ic].y << "," << PtSecondBot[ic].z << "}";
+
+    }
+
+    // Reorder the points where needed to ensure that any points which had switched places in the X axis (ie chordwise) are back
+    // in order, so when they are stitched to the primary points the edges won't cross / faces get reversed
+    std::sort(PtSecondTop.begin(), PtSecondTop.end(), sortSecondSkinFoilPointsTop);
+    std::sort(PtSecondBot.begin(), PtSecondBot.end(), sortSecondSkinFoilPointsBot);
+
+    if (wingNotMold) {
+        // For the secondary surface if the z value for the bottom face is above that of the top face then despite the angulation of the faces
+        // the primary points are closer than the skin thickness. These points should be removed to avoid slicing errors due to the wing being non manifold
 
 
-
-
+        // move the LE points of the inner skin so they are at least skinThickness away from the outer skin
+        for (int i = 0; i < PtPrimaryTop.size(); i++) {
+            if (PtSecondTop[i].x < PtSecondTop[i].x - skinThicknessTop[0]) {
+                PtSecondTop[i].x = PtSecondTop[i].x + skinThicknessTop[0];
+                PtSecondBot[i].x = PtSecondBot[i].x - skinThicknessTop[0];
+            } else {
+                break;
+            }
         }
+
+
+        // move the TE points of the inner skin so they are at least skinThickness away from the outer skin
+        // TODO: This needs to be fixed to adjust the x location, since currently it will result in an overly thick skin at the trailing edge
+        int skinEnded = 0;
+        for (int i = PtPrimaryTop.size() - 1; i > 0; i--) {
+            //find the first location where the inner surface top point is above the bottom point (ie in correct orientation)
+            if (PtSecondTop[i].z > PtSecondBot[i].z) {
+                skinEnded = i;
+                break;
+            }
+        }
+        if ((skinEnded > 0) & (skinEnded < PtPrimaryTop.size()-1)) {
+
+            //Vector3d PtTEInnerXZ = foilXZIntersection(PtSecondTop[skinEnded], PtSecondBot[skinEnded+1], PtSecondBot[skinEnded], PtSecondTop[skinEnded+1]);
+            // move all points within the skin to the first point beyond the skin
+            for (int i = skinEnded+1; i < PtPrimaryTop.size(); i++) {
+                PtSecondTop[i] = PtSecondTop[skinEnded];
+                PtSecondTop[i].z = (PtSecondTop[skinEnded].z + PtSecondBot[skinEnded].z)/2.0;
+                PtSecondBot[i] = PtSecondBot[skinEnded];
+                PtSecondBot[i].z = (PtSecondTop[skinEnded].z + PtSecondBot[skinEnded].z)/2.0;
+            }
+        }
+
+        // this will average any remaining points if the wing is particularly warped
+        for (int i = skinEnded; i < PtPrimaryTop.size(); i++) {
+            if (PtSecondTop[i].z < PtSecondBot[i].z) {
+                PtSecondTop[i].z = (PtSecondTop[i].z + PtSecondBot[i].z ) / 2.0;
+                PtSecondBot[i].z = PtSecondTop[i].z;
+            }
+        }
+
+    } else {
+        // intersection check isn't required if a mold is being created as the top and bottom skins can't intersect.
+        // but we need to extend the trailing and leading edges out to provide room for aligning/connecting them (eg with bolts)
+        // and ensure the top and bottom have flat faces to establish a firm contact
+
+
     }
 
 
-    // Now reorder the points where needed to ensure than any points which had switched places in the X axis (ie chordwise) are back
-    // in correct orientation
-    // These reordered points will be stitched to different primary points, so the edges won't cross / faces get reversed
-    // The normals of those get recalculated from the location of the points either side of them.
+    // TODO: Recalculate normals from the points either side of them
+    //NormalSecondTop =
+    //NormalSecondBot =
 
-
-    //sort(NormalSecondTopA.begin(), NormalSecondTopA.end(), sortSecondSkinFoilPointsTop());
 }
 
+
+
+
+// This function swaps Vector3ds pointed to by p0 and p1
+void Wing::swap(Vector3d& p0, Vector3d& p1)
+{
+    Vector3d pTmp = p0;
+    p0 = p1;
+    p1 = pTmp;
+}
+
+/**
+ * Cap the end of a surface "tube" at an arbitrary distance between two end foils
+ *
+ * Write the facet data to a file in STL Format.
+ * bool binaryOut - whether the function stores binary or text data?
+ * &outStreamData if binaryOut then required for output (else is ignored)
+ * &outStreamText if not binaryOut then required for output (else is ignored)
+ *
+ * Because stl files expect the vertices to be ordered clockwise when facing from the direction of the normal
+ *    there is a Left and a Right version of this function.
+ *
+ *  Returns: the number of triangles written from within this process
+ */
+int Wing::stitchFoilFace(QDataStream &outStreamData, QTextStream &outStreamText, bool &binaryOut, bool bRightCap,
+                         QVector<Vector3d> &PtTopLeft, QVector<Vector3d> &PtBotLeft,
+                         QVector<Vector3d> &PtTopRight, QVector<Vector3d> &PtBotRight,
+                         double tau, Vector3d &offset, float& unit)
+{
+
+
+    Vector3d N, Pt0, Pt1, Pt2;
+
+    qDebug() << "stitchFoilFace\n";
+    outStreamText << "stitchFoilFace\n";
+    //for RIBS and TIP PATCHES
+
+    int iTriangles = 0;
+
+    // set the appropriate normal
+    if (bRightCap)
+        N = { 0, 1, 0};
+    else
+        N = { 0, -1, 0};
+
+
+    //L.E. triangle
+    Pt0 = PtBotLeft[0]   * (1.0-tau) + PtBotRight[0]   * tau;
+    Pt1 = PtTopLeft[1] * (1.0-tau) + PtTopRight[1] * tau;
+    Pt2 = PtBotLeft[1] * (1.0-tau) + PtBotRight[1] * tau;
+    if (! bRightCap)        // correct the order of vertices for left face
+        swap(Pt1, Pt2);
+    exportSTLTriangle3dPrintable(outStreamData, outStreamText, binaryOut, Pt0, Pt1, Pt2, N, offset, unit);
+    iTriangles +=1;
+
+    for(int ic=1; ic<PtTopLeft.size()-2; ic++)
+    {
+        //1st triangle
+        Pt0 = PtBotLeft[ic]   * (1.0-tau) + PtBotRight[ic]   * tau;
+        Pt1 = PtTopLeft[ic] * (1.0-tau) + PtTopRight[ic] * tau;
+        Pt2 = PtTopLeft[ic+1] * (1.0-tau) + PtTopRight[ic+1] * tau;
+        if (! bRightCap)        // correct the order of vertices for left face
+            swap(Pt1, Pt2);
+        exportSTLTriangle3dPrintable(outStreamData, outStreamText, binaryOut, Pt0, Pt1, Pt2, N, offset, unit);
+
+
+        //2nd triangle
+        Pt0 = PtBotLeft[ic]   * (1.0-tau) + PtBotRight[ic]   * tau;
+        Pt1 = PtTopLeft[ic+1] * (1.0-tau) + PtTopRight[ic+1] * tau;
+        Pt2 = PtBotLeft[ic+1] * (1.0-tau) + PtBotRight[ic+1] * tau;
+        if (! bRightCap)        // correct the order of vertices for left face
+            swap(Pt1, Pt2);
+        exportSTLTriangle3dPrintable(outStreamData, outStreamText, binaryOut, Pt0, Pt1, Pt2, N, offset, unit);
+
+        iTriangles +=2;
+    }
+
+    //T.E. triangle
+    int ic = PtTopLeft.size()-2;
+    Pt0 = PtBotLeft[ic]   * (1.0-tau) + PtBotRight[ic]   * tau;
+    Pt1 = PtTopLeft[ic] * (1.0-tau) + PtTopRight[ic] * tau;
+    Pt2 = PtBotLeft[ic+1] * (1.0-tau) + PtBotRight[ic+1] * tau;
+    if (! bRightCap)        // correct the order of vertices for left face
+        swap(Pt1, Pt2);
+    exportSTLTriangle3dPrintable(outStreamData, outStreamText, binaryOut, Pt0, Pt1, Pt2, N, offset, unit);
+
+    iTriangles +=1;
+
+    qDebug() << "iTriangles: " << iTriangles << "\n";
+    outStreamText << "end stitchTopToBottomRight\n";
+    return iTriangles;
+
+}
+
+/**
+ * Cap the end of a surface "tube" at an arbitrary distance between two end foils
+ *
+ * Write the facet data to a file in STL Format.
+ * bool binaryOut - whether the function stores binary or text data?
+ * &outStreamData if binaryOut then required for output (else is ignored)
+ * &outStreamText if not binaryOut then required for output (else is ignored)
+ *
+ * Because stl files expect the vertices to be ordered clockwise when facing from the direction of the normal
+ *    there is a Left and a Right version of this function.
+ *
+ *  Returns: the number of triangles written from within this process
+ */
+int Wing::stitchSkinEdge(QDataStream &outStreamData, QTextStream &outStreamText, bool &binaryOut, bool bRightCap, bool wingNotMold,
+                         QVector<Vector3d> &PtPrimaryTopLeft, QVector<Vector3d> &PtPrimaryBotLeft,
+                         QVector<Vector3d> &PtPrimaryTopRight, QVector<Vector3d> &PtPrimaryBotRight,
+                         QVector<Vector3d> &PtSecondTopLeft, QVector<Vector3d> &PtSecondBotLeft,
+                         QVector<Vector3d> &PtSecondTopRight, QVector<Vector3d> &PtSecondBotRight,
+                         double tau, Vector3d &offset, float& unit)
+{
+
+
+    Vector3d N, Pt0, Pt1, Pt2;
+
+    qDebug() << "stitchFoilFace\n";
+    outStreamText << "stitchFoilFace\n";
+    //for RIBS and TIP PATCHES
+
+    int iTriangles = 0;
+
+    // set the appropriate normal
+    if (bRightCap)
+        N = { 0, 1, 0};
+    else
+        N = { 0, -1, 0};
+
+
+    for(int ic=0; ic<PtPrimaryTopLeft.size()-1; ic++)
+    {
+        //1st triangle (joining top surfaces)
+        Pt0 = PtSecondTopLeft[ic]   * (1.0-tau) + PtSecondTopRight[ic]   * tau;
+        Pt1 = PtPrimaryTopLeft[ic] * (1.0-tau) + PtPrimaryTopRight[ic] * tau;
+        Pt2 = PtPrimaryTopLeft[ic+1] * (1.0-tau) + PtPrimaryTopRight[ic+1] * tau;
+        if (! bRightCap)        // correct the order of vertices for left face
+            swap(Pt1, Pt2);
+        exportSTLTriangle3dPrintable(outStreamData, outStreamText, binaryOut, Pt0, Pt1, Pt2, N, offset, unit);
+
+        //2nd triangle (joining top surfaces)
+        Pt0 = PtSecondTopLeft[ic]   * (1.0-tau) + PtSecondTopRight[ic]   * tau;
+        Pt1 = PtPrimaryTopLeft[ic+1] * (1.0-tau) + PtPrimaryTopRight[ic+1] * tau;
+        Pt2 = PtSecondTopLeft[ic+1] * (1.0-tau) + PtSecondTopRight[ic+1] * tau;
+        if (! bRightCap)        // correct the order of vertices for left face
+            swap(Pt1, Pt2);
+        exportSTLTriangle3dPrintable(outStreamData, outStreamText, binaryOut, Pt0, Pt1, Pt2, N, offset, unit);
+
+        //1st triangle (joining bottom surfaces)
+        Pt0 = PtPrimaryBotLeft[ic]   * (1.0-tau) + PtPrimaryBotRight[ic]   * tau;
+        Pt1 = PtSecondBotLeft[ic] * (1.0-tau) + PtSecondBotRight[ic] * tau;
+        Pt2 = PtSecondBotLeft[ic+1] * (1.0-tau) + PtSecondBotRight[ic+1] * tau;
+        if (! bRightCap)        // correct the order of vertices for left face
+            swap(Pt1, Pt2);
+        exportSTLTriangle3dPrintable(outStreamData, outStreamText, binaryOut, Pt0, Pt1, Pt2, N, offset, unit);
+
+
+        //2nd triangle (joining bottom surfaces)
+        Pt0 = PtPrimaryBotLeft[ic]   * (1.0-tau) + PtPrimaryBotRight[ic]   * tau;
+        Pt1 = PtSecondBotLeft[ic+1] * (1.0-tau) + PtSecondBotRight[ic+1] * tau;
+        Pt2 = PtPrimaryBotLeft[ic+1] * (1.0-tau) + PtPrimaryBotRight[ic+1] * tau;
+        if (! bRightCap)        // correct the order of vertices for left face
+            swap(Pt1, Pt2);
+        exportSTLTriangle3dPrintable(outStreamData, outStreamText, binaryOut, Pt0, Pt1, Pt2, N, offset, unit);
+
+        iTriangles +=2;
+    }
+
+    qDebug() << "iTriangles: " << iTriangles << "\n";
+    outStreamText << "end stitchTopToBottomRight\n";
+    return iTriangles;
+
+}
 
 
 /**
@@ -3301,7 +3380,7 @@ void Wing::generateSecondSkinFoilPoints(QVector<Vector3d> &PtPrimaryTop, QVector
  * The version can also generate a mold - ie with the skin on the outside and no internal features
  * @param out the instance of the QTextStream to which the output will be directed
  */
-void Wing::exportSTL3dPrintable(QDataStream &outStreamData, QTextStream &outStreamText, bool binaryOut, int CHORDPANELS, int SPANPANELS)
+void Wing::exportSTL3dPrintable(QDataStream &outStreamData, QTextStream &outStreamText, bool binaryOut, int CHORDPANELS, int SPANPANELS, float unit)
 {
 
 
@@ -3394,11 +3473,13 @@ void Wing::exportSTL3dPrintable(QDataStream &outStreamData, QTextStream &outStre
     printerSize.set( 0.132, 0.074, 0.130 );       // Maximum printbounds (ie size of the printer)
 
     bool wingNotMold = true;              // generate a wing vs a mold (ie with the skin on the outside and no internal features)
+//    bool ribsOnly = false;                // generate only ribs (useful for 2d printing or lasercutting)
+//    bool ribAlignmentMarkers = false;     // add lines on the ribs to help vertical/horizontal alignment
 
     double skinThickness = 0.001;        // TODO: adjust the skin thickness depending on the force that each panel experiences
                                         // (but I'm not sure how to access that data from this )
-    QVector<double> skinThicknessTop(CHORDPANELS);
-    QVector<double> skinThicknessBot(CHORDPANELS);
+    QVector<double> skinThicknessTop(CHORDPANELS+1);
+    QVector<double> skinThicknessBot(CHORDPANELS+1);
     skinThicknessTop.fill(skinThickness);   // since we don't know how to set the skin thickness just make it constant
     skinThicknessBot.fill(skinThickness);   // since we don't know how to set the skin thickness just make it constant
 
@@ -3406,8 +3487,19 @@ void Wing::exportSTL3dPrintable(QDataStream &outStreamData, QTextStream &outStre
     QVector<double> ribLocations;       // This means use could manually set them or autospace them as desired
     double ribSpacing = 0.05;
     double curRibSection = 0;
-    double distanceFromRoot = 0;
+
     //int numberOfRibs = (surf.spanLength()/(double)ribSpacing);
+
+//    bool resinDrainageHoles = false;    // (not yet implemented) add triangular projections/cutouts at top and bottom of wing to allow resin drainage (and/or alignment keys)
+//    double resinDrainageHoleClearance = 0.0f;  // how much gap to leave between hole and peg?
+//    bool alignmentPegs = false;    // (not yet implemented) add pyramidal projections/cutouts  at inner surface of leading/trailing edge to improve alignment
+//    bool numberOfAlignmentPegs = false;    // keys will be distributed around the wing
+//    double alignmentPegClearance = 0.0f;  // how much gap to leave between hole and peg?
+
+//    bool bracingRim = false;              // (not yet implemented) generate a tubular extension to thicken the rib and support the brace cutouts
+//    double bracingRimHeight = 0.0f;         // how long should the tube be?
+//    double bracingRimThickness = 0.0f;      // how thick should the tube wall be?
+
 
     // autoset the ribs locations if not already done
     if (ribLocations.size() == 0)
@@ -3461,131 +3553,126 @@ void Wing::exportSTL3dPrintable(QDataStream &outStreamData, QTextStream &outStre
     // If the wing has multiple sections this will not work brilliantly - it will split each section and put a rib at the base of each
     // what would be better is to measure the size of each section then add the required proportion of each new section on until it was done
     // this should be possible but use of offset and tracking of the distance from the root
-    for (int j=0; j<1; j++)  //j<m_Surface.size(); j++)
+
+
+
+
+
+
+    for (int j=1; j<m_Surface.size(); j++)  //
     {
         //outStreamText << "Starting Surface " << j << "\n";
 
+
+
         Surface const &surf = m_Surface.at(j);
 
-        bool isRHS = false;
+        bool isRHS = surf.isRightSurf();
+
+
         //Get the chordwise points from the foils at the ends of both top and bottom of the current section
         surf.getSidePoints(xfl::TOPSURFACE, nullptr, PtPrimaryTopLeft, PtPrimaryTopRight, NormalPrimaryTopA, NormalPrimaryTopB, CHORDPANELS+1);
         surf.getSidePoints(xfl::BOTSURFACE, nullptr, PtPrimaryBotLeft, PtPrimaryBotRight, NormalPrimaryBotA, NormalPrimaryBotB, CHORDPANELS+1);
 
-
-        generateSecondSkinFoilPoints(PtPrimaryTopLeft, PtPrimaryBotLeft, NormalPrimaryTopA, NormalPrimaryBotA,
-                                 PtSecondTopLeft, PtSecondBotLeft, NormalSecondTopA, NormalSecondBotA,
+        // Generate LHS foil
+        generateSecondSkinFoilPoints(PtPrimaryTopLeft, NormalPrimaryTopA, PtPrimaryBotLeft, NormalPrimaryBotA,
+                                 PtSecondTopLeft, NormalSecondTopA, PtSecondBotLeft, NormalSecondBotA,
                                  skinThicknessTop, skinThicknessBot, wingNotMold);
-        generateSecondSkinFoilPoints(PtPrimaryTopRight, PtPrimaryBotRight, NormalPrimaryTopB, NormalPrimaryBotB,
-                                 PtSecondTopRight, PtSecondBotRight, NormalSecondTopB, NormalSecondBotB,
+        // Generate RHS foil
+        generateSecondSkinFoilPoints(PtPrimaryTopRight, NormalPrimaryTopB, PtPrimaryBotRight, NormalPrimaryBotB,
+                                 PtSecondTopRight, NormalSecondTopB, PtSecondBotRight, NormalSecondBotB,
                                  skinThicknessTop, skinThicknessBot, wingNotMold);
 
-
-        if (distanceFromRoot == ribLocations[curRibSection]) {
-
-            if (wingNotMold) {
-                //We are at a rib base so create a base plate
-
-                // How many braces penetrate this point?
-                int bracePenetrations = 0;
-                for (auto& brace : braces) {
-                    if ((brace.p0.xf() <= distanceFromRoot + ribThickness) & (brace.p1.xf() >= distanceFromRoot))
-                        bracePenetrations++;
-                }
-
-                if (bracePenetrations > 0) {
-                    // We'll need to stitch to the surface of the brace
-                    float braceVertexAv = 0.0;
-                    braceVertexAv = (2*CHORDPANELS+2) / bracePenetrations;
-
-                    // TODO: for the moment we're just going to stitch top and bottom surfaces directly - will sort out the brace penetration later
-                    if (isRHS)
-                        stitchTopToBottomRight(outStreamData, outStreamText, binaryOut, N, PtPrimaryTopLeft, PtPrimaryBotLeft, offset);
-                    else
-                        stitchTopToBottomLeft(outStreamData, outStreamText, binaryOut, N, PtPrimaryTopLeft, PtPrimaryBotLeft, offset);
-
-                } else {
-                    // we can stitch top and bottom surfaces directly
-                    if (isRHS)
-                        stitchTopToBottomRight(outStreamData, outStreamText, binaryOut, N, PtPrimaryTopLeft, PtPrimaryBotLeft, offset);
-                    else
-                        stitchTopToBottomLeft(outStreamData, outStreamText, binaryOut, N, PtPrimaryTopLeft, PtPrimaryBotLeft, offset);
-                }
-            } else {
-
-                // at each end there should be caps, then at each rib the rib is outside and is squared off so the mold sits flat on a surface
-                // there should also be a wall which goes up the outer edge - in case it needs filling with something cheap to support the mold
-                // generate a skirt outside the wing
-
-                // reverse all the normals for the primary foils - as they will form the inner surface rather than the outer
-              for (auto&  n : NormalPrimaryTopA)
-                  n.reverse();
-              for (auto&  n : NormalPrimaryTopB)
-                n.reverse();
-              for (auto&  n : NormalPrimaryBotA)
-                n.reverse();
-              for (auto&  n : NormalPrimaryBotB)
-                n.reverse();
-
-
+        if (!wingNotMold) {
+            // if we're printing a mold then the primary surface is the inner skin, so the normals should point inwards
+            for(int ic=0; ic<=CHORDPANELS; ic++)
+            {
+                NormalPrimaryTopA[ic].reverse();
+                NormalPrimaryTopB[ic].reverse();
+                NormalPrimaryBotA[ic].reverse();
+                NormalPrimaryBotB[ic].reverse();
             }
-
-
         }
 
 
 
+        double wingSpan = m_PlanformSpan;
+        double wingSectionLength = m_Section[j].m_Length;
+        double surfaceLength = surf.m_Length;
 
-//        qDebug() << "Number of ribs: " << surf.spanLength() << "/" << ribSpacing << " = " << numberOfRibs;
+        int spanDivisions = ((double)surf.m_Length/(double)ribSpacing + 1);
+        int panelsInSpan = ((double)surf.m_Length / (double) m_PlanformSpan * (double)SPANPANELS + 1);
+        int panelsPerDivision = ((double)panelsInSpan / (double)spanDivisions + 1);
+        double sizePerPanel = ribSpacing / (double)panelsPerDivision;
+        //is=0; is<SPANPANELS
 
-//        for (int rib=0; rib < numberOfRibs; rib++) {
+        double sectionRootDistanceFromWingRoot = 0;
+        double distanceFromSpanLeft = 0;
 
-//            qDebug() << "Number of SPANPANELS: " << numberOfRibs;
+        if (isRHS)
+            sectionRootDistanceFromWingRoot=0.0f;              // TODO: this isn't appropriate for multi-surface wings, but will do as for initial testing
+        else
+            sectionRootDistanceFromWingRoot=wingSpan/2.0f;     // TODO: this isn't appropriate for multi-surface wings, but will do as for initial testing
 
-            //top surface
-            for(int is=0; is<SPANPANELS; is++)
+
+        qDebug() << "Wing Dimensions: " << wingSpan << "," << wingSectionLength << "," << surfaceLength;
+        qDebug() << "Divisions: " << SPANPANELS << "," << spanDivisions << "," << panelsPerDivision << "," << sizePerPanel << "," << distanceFromSpanLeft << "\n";
+
+        // TODO: this will need to be modified to allow transition across multiple sections
+        for(int sd=0; sd<spanDivisions; sd++)
+        {
+            // each division should be placed flat on the printer bed
+            offset = { 0, -sectionRootDistanceFromWingRoot, sd*0.02 };
+
+
+
+
+            double dfslAtRibRoot = distanceFromSpanLeft;
+            // generate the top and bottom surface panels
+            for(int ppd=0; ppd<panelsPerDivision; ppd++)
             {
-                // now we step through the panels interpolating the chord locations
-                if (is>5)
+
+
+
+                // tau is the proportional distance along the current span
+                // uses the same A/B logic as Normals (ie A is the left face, B is the right face
+                double tauA = distanceFromSpanLeft / surf.m_Length;
+                if (tauA > 1.0)
                     break;
+                double tauB = double(distanceFromSpanLeft+sizePerPanel) / double(surf.m_Length);
+                if (tauB > 1.0)
+                    tauB = 1.0f;     // for the last division it can't be further than the full length of the span
 
-                for (auto& pt : PtPrimaryTopLeft) {
-                    qDebug() << pt.x << "," << pt.y << "," << pt.z << "|";
-                }
-                qDebug() << "moving on...";
-
-                double tauA = double(is)   / double(SPANPANELS);        // what proportion along the wing have we travelled
-                double tauB = double(is+1) / double(SPANPANELS);
+                // for the first division from the rib the inner skin faces should begin the thickness of the ribs further along the span
+                // TODO: this will perform incorrectly if ribThickness > sizePerPanel
+                double tauC = tauA;
+                if (ppd==0)
+                    tauC = double(distanceFromSpanLeft+ribThickness) / double(surf.m_Length);
                 double tau = (tauA+tauB)/2.0;
+
+
+                //primary top surface
                 for(int ic=0; ic<CHORDPANELS; ic++)
                 {
                     N = (NormalPrimaryTopA[ic]+NormalPrimaryTopA[ic+1]) * (1.0-tau) + (NormalPrimaryTopB[ic]+NormalPrimaryTopB[ic+1]) * tau;
                     N.normalize();
 
-                    // Split the rectangular panel into two triangles
                     //1st triangle
                     Pt0 = PtPrimaryTopLeft[ic]   * (1.0-tauA) + PtPrimaryTopRight[ic]   * tauA;
                     Pt1 = PtPrimaryTopLeft[ic+1] * (1.0-tauA) + PtPrimaryTopRight[ic+1] * tauA;
                     Pt2 = PtPrimaryTopLeft[ic]   * (1.0-tauB) + PtPrimaryTopRight[ic]   * tauB;
-                    exportSTLTriangle3dPrintable(outStreamData, outStreamText, binaryOut, N, Pt0, Pt1, Pt2, offset);
+                    exportSTLTriangle3dPrintable(outStreamData, outStreamText, binaryOut, Pt0, Pt1, Pt2, N, offset, unit);
+
 
                     //2nd triangle
                     Pt0 = PtPrimaryTopLeft[ic]   * (1.0-tauB) + PtPrimaryTopRight[ic]   * tauB;
                     Pt1 = PtPrimaryTopLeft[ic+1] * (1.0-tauA) + PtPrimaryTopRight[ic+1] * tauA;
                     Pt2 = PtPrimaryTopLeft[ic+1] * (1.0-tauB) + PtPrimaryTopRight[ic+1] * tauB;
-                    exportSTLTriangle3dPrintable(outStreamData, outStreamText, binaryOut, N, Pt0, Pt1, Pt2, offset);
+                    exportSTLTriangle3dPrintable(outStreamData, outStreamText, binaryOut, Pt0, Pt1, Pt2, N, offset, unit);
                     iTriangles +=2;
                 }
-            }
-            break;
-            //bottom surface
-            for(int is=0; is<SPANPANELS; is++)
-            {
 
-
-                double tauA = double(is)   /double(SPANPANELS);
-                double tauB = double(is+1) /double(SPANPANELS);
-                double tau = (tauA+tauB)/2.0;
+                //primary bottom surface
                 for(int ic=0; ic<CHORDPANELS; ic++)
                 {
                     //left side vertices
@@ -3596,26 +3683,197 @@ void Wing::exportSTL3dPrintable(QDataStream &outStreamData, QTextStream &outStre
                     Pt0 = PtPrimaryBotLeft[ic]   * (1.0-tauA) + PtPrimaryBotRight[ic]   * tauA;
                     Pt1 = PtPrimaryBotLeft[ic+1] * (1.0-tauA) + PtPrimaryBotRight[ic+1] * tauA;
                     Pt2 = PtPrimaryBotLeft[ic]   * (1.0-tauB) + PtPrimaryBotRight[ic]   * tauB;
-                    exportSTLTriangle3dPrintable(outStreamData, outStreamText, binaryOut, N, Pt0, Pt1, Pt2, offset);
+                    //exportSTLTextTriangle(outStreamText, N, Pt0, Pt1, Pt2);
+                    exportSTLTriangle3dPrintable(outStreamData, outStreamText, binaryOut, Pt0, Pt1, Pt2, N, offset, unit);
 
                     //2nd triangle
                     Pt0 = PtPrimaryBotLeft[ic+1] * (1.0-tauA) + PtPrimaryBotRight[ic+1] * tauA;
                     Pt1 = PtPrimaryBotLeft[ic+1] * (1.0-tauB) + PtPrimaryBotRight[ic+1] * tauB;
                     Pt2 = PtPrimaryBotLeft[ic]   * (1.0-tauB) + PtPrimaryBotRight[ic]   * tauB;
-                    exportSTLTriangle3dPrintable(outStreamData, outStreamText, binaryOut, N, Pt0, Pt1, Pt2, offset);
+                    //exportSTLTextTriangle(outStreamText, N, Pt0, Pt1, Pt2);
+                    exportSTLTriangle3dPrintable(outStreamData, outStreamText, binaryOut, Pt0, Pt1, Pt2, N, offset, unit);
                     iTriangles +=2;
+                }
+
+                if (tauC <= tauB)      // if the rib projects beyond the end of the section then don't create an inner skin
+                {
+
+                    //secondary top surface
+                    outStreamText << "secondary top surface\n";
+                    for(int ic=0; ic<CHORDPANELS; ic++)
+                    {
+                        N = (NormalSecondTopA[ic]+NormalSecondTopA[ic+1]) * (1.0-tau) + (NormalSecondTopB[ic]+NormalSecondTopB[ic+1]) * tau;
+                        N.normalize();
+
+                        //1st triangle
+                        Pt0 = PtSecondTopLeft[ic]   * (1.0-tauC) + PtSecondTopRight[ic]   * tauC;
+                        Pt1 = PtSecondTopLeft[ic+1] * (1.0-tauC) + PtSecondTopRight[ic+1] * tauC;
+                        Pt2 = PtSecondTopLeft[ic]   * (1.0-tauB) + PtSecondTopRight[ic]   * tauB;
+                        exportSTLTriangle3dPrintable(outStreamData, outStreamText, binaryOut, Pt0, Pt1, Pt2, N, offset, unit);
+
+
+                        //2nd triangle
+                        Pt0 = PtSecondTopLeft[ic]   * (1.0-tauB) + PtSecondTopRight[ic]   * tauB;
+                        Pt1 = PtSecondTopLeft[ic+1] * (1.0-tauC) + PtSecondTopRight[ic+1] * tauC;
+                        Pt2 = PtSecondTopLeft[ic+1] * (1.0-tauB) + PtSecondTopRight[ic+1] * tauB;
+                        exportSTLTriangle3dPrintable(outStreamData, outStreamText, binaryOut, Pt0, Pt1, Pt2, N, offset, unit);
+                        iTriangles +=2;
+                    }
+
+                    //secondary bottom surface
+                    outStreamText << "secondary bot surface\n";
+                    for(int ic=0; ic<CHORDPANELS; ic++)
+                    {
+                        //left side vertices
+                        N = (NormalSecondBotA[ic]+NormalSecondBotA[ic+1]) * (1.0-tau) + (NormalSecondBotB[ic]+NormalSecondBotB[ic+1]) * tau;
+                        N.normalize();
+
+                        //1st triangle
+                        Pt0 = PtSecondBotLeft[ic]   * (1.0-tauC) + PtSecondBotRight[ic]   * tauC;
+                        Pt1 = PtSecondBotLeft[ic+1] * (1.0-tauC) + PtSecondBotRight[ic+1] * tauC;
+                        Pt2 = PtSecondBotLeft[ic]   * (1.0-tauB) + PtSecondBotRight[ic]   * tauB;
+                        //exportSTLTextTriangle(outStreamText, N, Pt0, Pt1, Pt2);
+                        exportSTLTriangle3dPrintable(outStreamData, outStreamText, binaryOut, Pt0, Pt1, Pt2, N, offset, unit);
+
+                        //2nd triangle
+                        Pt0 = PtSecondBotLeft[ic+1] * (1.0-tauC) + PtSecondBotRight[ic+1] * tauC;
+                        Pt1 = PtSecondBotLeft[ic+1] * (1.0-tauB) + PtSecondBotRight[ic+1] * tauB;
+                        Pt2 = PtSecondBotLeft[ic]   * (1.0-tauB) + PtSecondBotRight[ic]   * tauB;
+                        //exportSTLTextTriangle(outStreamText, N, Pt0, Pt1, Pt2);
+                        exportSTLTriangle3dPrintable(outStreamData, outStreamText, binaryOut, Pt0, Pt1, Pt2, N, offset, unit);
+                        iTriangles +=2;
+                    }
+                }
+
+                distanceFromSpanLeft+=sizePerPanel;
+
+            }
+
+            // RHS end caps mirror the LHS - so probably easier to code separately
+            if (isRHS) {
+
+                // tau is the proportional distance along the current span
+                // uses the same A/B logic as Normals (ie A is the left face, B is the right face
+                double tauRibRoot = dfslAtRibRoot / surf.m_Length;
+                double tauRibInner = (dfslAtRibRoot + ribThickness) / surf.m_Length;
+                double tauSkinCap = distanceFromSpanLeft / surf.m_Length;
+
+
+                Vector3d ribOffset = offset;
+                ribOffset.y = -ribOffset.y;
+
+
+                // generate the rib face in contact with the printer buildplate
+                iTriangles += stitchFoilFace(outStreamData, outStreamText, binaryOut, isRHS,
+                               PtPrimaryTopLeft, PtPrimaryBotLeft, PtPrimaryTopRight, PtPrimaryBotRight,
+                               tauRibRoot, offset, unit);
+
+                // generate the rib face linking the top and bottom surfaces of the inner skin
+                iTriangles += stitchFoilFace(outStreamData, outStreamText, binaryOut, isRHS,
+                               PtSecondTopLeft, PtSecondBotLeft, PtSecondTopRight, PtSecondBotRight,
+                               tauRibInner, offset, unit);
+
+                // generate the faces linking the outer and inner edges of the skin
+                iTriangles += stitchSkinEdge(outStreamData, outStreamText, binaryOut, isRHS, wingNotMold,
+                               PtPrimaryTopLeft, PtPrimaryBotLeft, PtPrimaryTopRight, PtPrimaryBotRight,
+                               PtSecondTopLeft, PtSecondBotLeft, PtSecondTopRight, PtSecondBotRight,
+                               tauSkinCap, offset, unit);
+
+
+                sectionRootDistanceFromWingRoot+=(panelsPerDivision*sizePerPanel);
+
+
+
+            }
+            else {
+                //stitchTopToBottomLeft(outStreamData, outStreamText, binaryOut, PtPrimaryTopLeft, PtPrimaryBotLeft, N, offset, unit);
+
+                sectionRootDistanceFromWingRoot-=sizePerPanel;
+
+            }
+
+
+
+
+
+
+
+
+
+
+
+        }
+    }
+
+
+
+
+    /*
+            qDebug() << ">3505<";
+
+            if (distanceFromRoot == ribLocations[curRibSection]) {
+
+                if (wingNotMold) {
+                    //We are at a rib base so create a base plate
+
+                    // How many braces penetrate this point?
+                    int bracePenetrations = 0;
+                    for (auto& brace : braces) {
+                        if ((brace.p0.xf() <= distanceFromRoot + ribThickness) & (brace.p1.xf() >= distanceFromRoot))
+                            bracePenetrations++;
+                    }
+
+                    if (bracePenetrations > 0) {
+                        // We'll need to stitch to the surface of the brace
+                        float braceVertexAv = 0.0;
+                        braceVertexAv = (2*CHORDPANELS+2) / bracePenetrations;
+
+                        // TODO: for the moment we're just going to stitch top and bottom surfaces directly - will sort out the brace penetration later
+                        if (isRHS)
+                            stitchTopToBottomRight(outStreamData, outStreamText, binaryOut, PtPrimaryTopLeft, PtPrimaryBotLeft, N, offset);
+                        else
+                            stitchTopToBottomLeft(outStreamData, outStreamText, binaryOut, PtPrimaryTopLeft, PtPrimaryBotLeft, N, offset);
+
+                    } else {
+                        // we can stitch top and bottom surfaces directly
+                        if (isRHS)
+                            stitchTopToBottomRight(outStreamData, outStreamText, binaryOut, PtPrimaryTopLeft, PtPrimaryBotLeft, N, offset);
+                        else
+                            stitchTopToBottomLeft(outStreamData, outStreamText, binaryOut, PtPrimaryTopLeft, PtPrimaryBotLeft, N, offset);
+                    }
+                } else {
+
+                    // at each end there should be caps, then at each rib the rib is outside and is squared off so the mold sits flat on a surface
+                    // there should also be a wall which goes up the outer edge - in case it needs filling with something cheap to support the mold
+                    // generate a skirt outside the wing
+
+                    // reverse all the normals for the primary foils - as they will form the inner surface rather than the outer
+                  for (auto&  n : NormalPrimaryTopA)
+                      n.reverse();
+                  for (auto&  n : NormalPrimaryTopB)
+                    n.reverse();
+                  for (auto&  n : NormalPrimaryBotA)
+                    n.reverse();
+                  for (auto&  n : NormalPrimaryBotB)
+                    n.reverse();
+
+
                 }
             }
 
-//        }
-        distanceFromRoot+=surf.spanLength();
-    }
-
-    // at this point there should be 2 top surface and 2 surface bottom trianges for every division of chord and span
-    //Q_ASSERT(iTriangles==m_Surface.count() * CHORDPANELS * SPANPANELS * 2 *2);
+            qDebug() << ">3557<";
 
 
-    //Q_ASSERT(iTriangles==nTriangles);
+
+
+    //        qDebug() << "Number of ribs: " << surf.spanLength() << "/" << ribSpacing << " = " << numberOfRibs;
+
+    //        for (int rib=0; rib < numberOfRibs; rib++) {
+
+    //            qDebug() << "Number of SPANPANELS: " << numberOfRibs;
+
+    */
+
 
 
     // BRACING STRUTS - A cylindrical support
@@ -3625,8 +3883,6 @@ void Wing::exportSTL3dPrintable(QDataStream &outStreamData, QTextStream &outStre
 
     // TIPCAP
     // This is half an icosagon with a radius equal to half the distance between top and bottom surfaces
-
-
 
 
     if (binaryOut) {

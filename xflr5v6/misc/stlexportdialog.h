@@ -44,6 +44,7 @@ class STLExportDlg : public QDialog
         static bool saveSettings(QSettings &settings);
 
         static bool s_bBinary;
+        static bool s_b3dPrint;
         static int s_NChordPanels;
         static int s_NSpanPanels;
         static int s_iObject;
@@ -60,7 +61,7 @@ class STLExportDlg : public QDialog
 
     private:
         IntEdit *m_pieChordPanels, *m_pieSpanPanels;
-        QRadioButton *m_prbBinary, *m_prbASCII, *m_prb3dPrintable;
+        QRadioButton *m_prbBinary, *m_prbASCII, *m_prb3dPrintable, *m_prb2dPrintable;
         QRadioButton *m_prb[5];
 
         QLabel *m_plabChordLabel, *m_plabSpanLabel;

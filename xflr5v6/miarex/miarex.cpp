@@ -7810,8 +7810,8 @@ Wing *Miarex::pWing(int iw)
 
 
 /**
- * Exports the geometrical data of the acitve wing or plane to a text file readable by AVL
- *@todo AVL expects consistency of the units, need to check all lines and cases
+ * Exports the geometrical data of the active wing or plane to a text file readable by STL
+ *@todo STL expects consistency of the units, need to check all lines and cases
  */
 void Miarex::onExporttoSTL()
 {
@@ -7837,6 +7837,7 @@ void Miarex::onExporttoSTL()
 
 
     bool bBinary = STLExportDlg::s_bBinary;
+    bool b3dPrint = STLExportDlg::s_b3dPrint;
 
     int pos = FileName.lastIndexOf("/");
     if(pos>0) xfl::s_LastDirName = FileName.left(pos);
@@ -7848,25 +7849,45 @@ void Miarex::onExporttoSTL()
 
     if(STLExportDlg::s_iObject>0)
     {
-        if(bBinary)
-        {
-            if (!XFile.open(QIODevice::WriteOnly)) return;
-            QDataStream out(&XFile);
-            out.setByteOrder(QDataStream::LittleEndian);
-            pWing(STLExportDlg::s_iObject-1)->exportSTLBinary(out,
-                                                              STLExportDlg::s_NChordPanels, STLExportDlg::s_NSpanPanels,
-                                                              float(Units::mtoUnit()));
-        }
-        else
-        {
-            if (!XFile.open(QIODevice::WriteOnly | QIODevice::Text)) return ;
-            QTextStream out(&XFile);
-            //NB this needs to be re-enabled when 3dprintable is working correctly
-            //pWing(STLExportDlg::s_iObject-1)->exportSTLText(out, STLExportDlg::s_NChordPanels, STLExportDlg::s_NSpanPanels);
 
+        if (b3dPrint == false)
+        {
+            qDebug() << "!b3DPrint\n";
+            if(bBinary)
+            {
+                if (!XFile.open(QIODevice::WriteOnly)) return;
+                QDataStream out(&XFile);
+                out.setByteOrder(QDataStream::LittleEndian);
+                pWing(STLExportDlg::s_iObject-1)->exportSTLBinary(out,
+                                                                  STLExportDlg::s_NChordPanels, STLExportDlg::s_NSpanPanels,
+                                                                  float(Units::mtoUnit()));
+            }
+            else
+            {
+                if (!XFile.open(QIODevice::WriteOnly | QIODevice::Text)) return ;
+                QTextStream out(&XFile);
+                pWing(STLExportDlg::s_iObject-1)->exportSTLText(out, STLExportDlg::s_NChordPanels, STLExportDlg::s_NSpanPanels);
+            }
+
+        } else {
+            qDebug() << "b3DPrint\n";
             // 3dPrintable does both binary and text output, but requires handles to both format types
-            QDataStream outDummy;
-            pWing(STLExportDlg::s_iObject-1)->exportSTL3dPrintable(outDummy, out, bBinary, STLExportDlg::s_NChordPanels, STLExportDlg::s_NSpanPanels);
+            if(bBinary)
+            {
+                if (!XFile.open(QIODevice::WriteOnly)) return;
+                QDataStream out(&XFile);
+                out.setByteOrder(QDataStream::LittleEndian);
+                QTextStream outDummy;
+
+                pWing(STLExportDlg::s_iObject-1)->exportSTL3dPrintable(out, outDummy, bBinary, STLExportDlg::s_NChordPanels, STLExportDlg::s_NSpanPanels, float(Units::mtoUnit()));
+            }
+            else
+            {
+                if (!XFile.open(QIODevice::WriteOnly | QIODevice::Text)) return ;
+                QTextStream out(&XFile);
+                QDataStream outDummy;
+                pWing(STLExportDlg::s_iObject-1)->exportSTL3dPrintable(outDummy, out, bBinary, STLExportDlg::s_NChordPanels, STLExportDlg::s_NSpanPanels, float(Units::mtoUnit()));
+            }
         }
     }
     else if(STLExportDlg::s_iObject==0 && m_pCurPlane->body())

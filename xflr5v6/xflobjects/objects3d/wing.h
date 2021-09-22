@@ -251,24 +251,32 @@ class Wing
         bool serializeWingWPA(QDataStream &ar, bool bIsStoring);
         bool serializeWingXFL(QDataStream &ar, bool bIsStoring);
 
+        void exportSTLBinaryTriangle(QDataStream &outStream, Vector3d N, Vector3d Pt0, Vector3d Pt1, Vector3d Pt2, float unit);
         void exportSTLBinary(QDataStream &outStream, int CHORDPANELS, int SPANPANELS, float unit);
         void exportSTLTextTriangle(QTextStream &outStream, Vector3d N, Vector3d Pt0, Vector3d Pt1, Vector3d Pt2);
         void exportSTLText(QTextStream &outStream, int CHORDPANELS, int SPANPANELS);
 
-        void exportSTLTriangle3dPrintable(QDataStream &outStreamData, QTextStream &outStreamText, bool binaryOut, Vector3d N, Vector3d Pt0, Vector3d Pt1, Vector3d Pt2, Vector3d offset);
-        int stitchTopToBottomLeft(QDataStream &outStreamData, QTextStream &outStreamText, bool &binaryOut, Vector3d &N, QVector<Vector3d> &topEdge, QVector<Vector3d> &botEdge, Vector3d &offset);
-        int stitchTopToBottomRight(QDataStream &outStreamData, QTextStream &outStreamText, bool &binaryOut, Vector3d &N, QVector<Vector3d> &topEdge, QVector<Vector3d> &botEdge, Vector3d &offset);
-        bool sortSecondSkinFoilPointsTop(Vector3d p0, Vector3d p1);
-        bool sortSecondSkinFoilPointsBottom(Vector3d p0, Vector3d p1);
-        void generateSecondSkinFoilPoints(QVector<Vector3d> &PtOuterTop, QVector<Vector3d> &PtOuterBot,
-                                      QVector<Vector3d> &NormalOuterTopA, QVector<Vector3d> &NormalOuterTopB,
-                                      QVector<Vector3d> &NormalOuterBotA, QVector<Vector3d> &NormalOuterBotB,
-                                      QVector<Vector3d> &PtSecondTop, QVector<Vector3d> &PtSecondBot,
-                                      QVector<Vector3d> &NormalSecondTopA, QVector<Vector3d> &NormalSecondTopB,
-                                      QVector<Vector3d> &NormalSecondBotA, QVector<Vector3d> &NormalSecondBotB,
-                                      QVector<double> &skinThicknessTop, QVector<double>  &skinThicknessBot,
-                                      bool wingNotMold);
-        void exportSTL3dPrintable(QDataStream &outStreamData, QTextStream &outStreamText, bool binaryOut, int CHORDPANELS, int SPANPANELS);
+        void exportSTLTriangle3dPrintable(QDataStream &outStreamData, QTextStream &outStreamText, bool binaryOut,
+                                          Vector3d Pt0, Vector3d Pt1, Vector3d Pt2, Vector3d N, Vector3d offset, float unit);
+        void swap(Vector3d& p0, Vector3d& p1);
+        int stitchFoilFace(QDataStream &outStreamData, QTextStream &outStreamText, bool &binaryOut, bool bRightCap,
+                           QVector<Vector3d> &PtTopLeft, QVector<Vector3d> &PtBotLeft,
+                           QVector<Vector3d> &PtTopRight, QVector<Vector3d> &PtBotRight,
+                           double tau, Vector3d &offset, float& unit);
+        int stitchSkinEdge(QDataStream &outStreamData, QTextStream &outStreamText, bool &binaryOut, bool bRightCap, bool wingNotMold,
+                                 QVector<Vector3d> &PtPrimaryTopLeft, QVector<Vector3d> &PtPrimaryBotLeft,
+                                 QVector<Vector3d> &PtPrimaryTopRight, QVector<Vector3d> &PtPrimaryBotRight,
+                                 QVector<Vector3d> &PtSecondTopLeft, QVector<Vector3d> &PtSecondBotLeft,
+                                 QVector<Vector3d> &PtSecondTopRight, QVector<Vector3d> &PtSecondBotRight,
+                                 double tau, Vector3d &offset, float& unit);
+        Vector3d foilXZIntersection(Vector3d A, Vector3d B, Vector3d C, Vector3d D);
+        void generateSecondSkinFoilPoints(QVector<Vector3d> &PtPrimaryTop, QVector<Vector3d> &NormalPrimaryTop,
+                                          QVector<Vector3d> &PtPrimaryBot, QVector<Vector3d> &NormalPrimaryBot,
+                                          QVector<Vector3d> &PtSecondTop, QVector<Vector3d> &NormalSecondTop,
+                                          QVector<Vector3d> &PtSecondBot, QVector<Vector3d> &NormalSecondBot,
+                                          QVector<double> &skinThicknessTop, QVector<double>  &skinThicknessBot,
+                                          bool wingNotMold);
+        void exportSTL3dPrintable(QDataStream &outStreamData, QTextStream &outStreamText, bool binaryOut, int CHORDPANELS, int SPANPANELS, float unit);
 
         Foil* foil(const QString &strFoilName);
 
