@@ -3694,6 +3694,7 @@ uint32_t Wing::exportSTL3dPrintable(QDataStream &outStreamData, QTextStream &out
             }
             zDivisionOffset += maxZSpan * zDivisionStep;
 
+            bool capIsNeeded = false;
             // generate the top and bottom surface panels
             for(int ppd=0; ppd<panelsPerDivision; ppd++)
             {
@@ -3763,7 +3764,7 @@ uint32_t Wing::exportSTL3dPrintable(QDataStream &outStreamData, QTextStream &out
 
                 if (tauC <= tauB)      // if the rib projects beyond the end of the section then don't create an inner skin
                 {
-
+                    capIsNeeded = true;
                     //secondary top surface
                     outStreamText << "secondary top surface\n";
                     for(int ic=0; ic<CHORDPANELS; ic++)
@@ -3815,103 +3816,96 @@ uint32_t Wing::exportSTL3dPrintable(QDataStream &outStreamData, QTextStream &out
 
             }
 
-            // RHS end caps mirror the LHS - so probably easier to code separately
-            if (isRHS) {
 
-                // tau is the proportional distance along the current span
-                // uses the same A/B logic as Normals (ie A is the left face, B is the right face
-                double tauRibRoot = dfslAtRibRoot / surf.m_Length;
-                double tauRibInner = (dfslAtRibRoot + ribThickness) / surf.m_Length;
-                double tauSkinCap = distanceFromSectionLeft / surf.m_Length;
+            if (capIsNeeded) {
 
+                // RHS end caps mirror the LHS - so probably easier to code separately
+                if (isRHS) {
 
-                Vector3d ribOffset = offset;
-                ribOffset.y = -ribOffset.y;
-
-                if (outputStyle == PRINTABLE)
-                {
+                    // tau is the proportional distance along the current span
+                    // uses the same A/B logic as Normals (ie A is the left face, B is the right face
+                    double tauRibRoot = dfslAtRibRoot / surf.m_Length;
+                    double tauRibInner = (dfslAtRibRoot + ribThickness) / surf.m_Length;
+                    double tauSkinCap = distanceFromSectionLeft / surf.m_Length;
 
 
-                    // How many braces penetrate this rib?
-                    int bracePenetrations = 0;
-                    for (auto& brace : braces) {
-                        // if the brace contacts the rib it will be treated as full penetration
-                        if ((brace.p0.x <= dfslAtRibRoot + ribThickness) & (brace.p1.x >= dfslAtRibRoot))
-                            bracePenetrations++;
-                    }
+                    Vector3d ribOffset = offset;
+                    ribOffset.y = -ribOffset.y;
 
-                    if (bracePenetrations == 0) {
-                        // generate the rib face in contact with the printer buildplate
-                        iTriangles += stitchFoilFace(outStreamData, outStreamText, binaryOut, isRHS,
+                    if (outputStyle == PRINTABLE)
+                    {
+
+
+                        // How many braces penetrate this rib?
+                        int bracePenetrations = 0;
+                        for (auto& brace : braces) {
+                            // if the brace contacts the rib it will be treated as full penetration
+                            if ((brace.p0.x <= dfslAtRibRoot + ribThickness) & (brace.p1.x >= dfslAtRibRoot))
+                                bracePenetrations++;
+                        }
+
+                        if (bracePenetrations == 0) {
+                            // generate the rib face in contact with the printer buildplate
+                            iTriangles += stitchFoilFace(outStreamData, outStreamText, binaryOut, isRHS,
+                                           PtPrimaryTopLeft, PtPrimaryBotLeft, PtPrimaryTopRight, PtPrimaryBotRight,
+                                           tauRibRoot, offset, unit);
+
+                            // generate the rib face linking the top and bottom surfaces of the inner skin
+                            iTriangles += stitchFoilFace(outStreamData, outStreamText, binaryOut, isRHS,
+                                           PtSecondTopLeft, PtSecondBotLeft, PtSecondTopRight, PtSecondBotRight,
+                                           tauRibInner, offset, unit);
+
+
+                        }
+                        else
+                        {
+
+
+
+                            // We'll need to stitch to the surface of the brace
+                            float braceVertexAv = 0.0;
+                            braceVertexAv = (2*CHORDPANELS+2) / bracePenetrations;
+
+                            // TODO: for the moment we're just going to stitch top and bottom surfaces directly - will sort out the brace penetration later
+                            iTriangles += stitchFoilFace(outStreamData, outStreamText, binaryOut, isRHS,
+                                           PtPrimaryTopLeft, PtPrimaryBotLeft, PtPrimaryTopRight, PtPrimaryBotRight,
+                                           tauRibRoot, offset, unit);
+
+                            // generate the rib face linking the top and bottom surfaces of the inner skin
+                            iTriangles += stitchFoilFace(outStreamData, outStreamText, binaryOut, isRHS,
+                                           PtSecondTopLeft, PtSecondBotLeft, PtSecondTopRight, PtSecondBotRight,
+                                           tauRibInner, offset, unit);
+
+
+                        }
+
+                        // generate the faces linking the outer and inner edges of the skin
+                        iTriangles += stitchSkinEdge(outStreamData, outStreamText, binaryOut, isRHS, outputStyle,
                                        PtPrimaryTopLeft, PtPrimaryBotLeft, PtPrimaryTopRight, PtPrimaryBotRight,
-                                       tauRibRoot, offset, unit);
-
-                        // generate the rib face linking the top and bottom surfaces of the inner skin
-                        iTriangles += stitchFoilFace(outStreamData, outStreamText, binaryOut, isRHS,
                                        PtSecondTopLeft, PtSecondBotLeft, PtSecondTopRight, PtSecondBotRight,
-                                       tauRibInner, offset, unit);
+                                       tauSkinCap, offset, unit);
 
 
                     }
                     else
                     {
 
-
-
-                        // We'll need to stitch to the surface of the brace
-                        float braceVertexAv = 0.0;
-                        braceVertexAv = (2*CHORDPANELS+2) / bracePenetrations;
-
-                        // TODO: for the moment we're just going to stitch top and bottom surfaces directly - will sort out the brace penetration later
-                        iTriangles += stitchFoilFace(outStreamData, outStreamText, binaryOut, isRHS,
-                                       PtPrimaryTopLeft, PtPrimaryBotLeft, PtPrimaryTopRight, PtPrimaryBotRight,
-                                       tauRibRoot, offset, unit);
-
-                        // generate the rib face linking the top and bottom surfaces of the inner skin
-                        iTriangles += stitchFoilFace(outStreamData, outStreamText, binaryOut, isRHS,
-                                       PtSecondTopLeft, PtSecondBotLeft, PtSecondTopRight, PtSecondBotRight,
-                                       tauRibInner, offset, unit);
-
+                        // at each end there should be caps, then at each rib the rib is outside and is squared off so the mold sits flat on a surface
+                        // there should also be a wall which goes up the outer edge - in case it needs filling with something cheap to support the mold
+                        // generate a skirt outside the wing
 
                     }
 
-                    // generate the faces linking the outer and inner edges of the skin
-                    iTriangles += stitchSkinEdge(outStreamData, outStreamText, binaryOut, isRHS, outputStyle,
-                                   PtPrimaryTopLeft, PtPrimaryBotLeft, PtPrimaryTopRight, PtPrimaryBotRight,
-                                   PtSecondTopLeft, PtSecondBotLeft, PtSecondTopRight, PtSecondBotRight,
-                                   tauSkinCap, offset, unit);
-
+                    sectionRootDistanceFromWingRoot+=ribSpacing; // (panelsPerDivision*sizePerPanel);
 
                 }
-                else
-                {
+                else {
+                    //stitchTopToBottomLeft(outStreamData, outStreamText, binaryOut, PtPrimaryTopLeft, PtPrimaryBotLeft, N, offset, unit);
 
-                    // at each end there should be caps, then at each rib the rib is outside and is squared off so the mold sits flat on a surface
-                    // there should also be a wall which goes up the outer edge - in case it needs filling with something cheap to support the mold
-                    // generate a skirt outside the wing
+                    sectionRootDistanceFromWingRoot-=sizePerPanel;
 
                 }
-
-                sectionRootDistanceFromWingRoot+=ribSpacing; // (panelsPerDivision*sizePerPanel);
-
             }
-            else {
-                //stitchTopToBottomLeft(outStreamData, outStreamText, binaryOut, PtPrimaryTopLeft, PtPrimaryBotLeft, N, offset, unit);
-
-                sectionRootDistanceFromWingRoot-=sizePerPanel;
-
-            }
-
-
-
-
-
-
-
-
-
-
-
         }
     }
 
