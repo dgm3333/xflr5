@@ -257,7 +257,8 @@ class Wing
         void exportSTLText(QTextStream &outStream, int CHORDPANELS, int SPANPANELS);
 
         void exportSTLTriangle3dPrintable(QDataStream &outStreamData, QTextStream &outStreamText, bool binaryOut,
-                                          Vector3d Pt0, Vector3d Pt1, Vector3d Pt2, Vector3d N, Vector3d offset, float unit);
+                                          Vector3d Pt0, Vector3d Pt1, Vector3d Pt2, Vector3d N, Vector3d offset, float unit,
+                                          bool reverse=false);
         void swap(Vector3d& p0, Vector3d& p1);
         int stitchFoilFace(QDataStream &outStreamData, QTextStream &outStreamText, bool &binaryOut, bool bRightCap,
                            QVector<Vector3d> &PtTopLeft, QVector<Vector3d> &PtBotLeft,
@@ -276,6 +277,9 @@ class Wing
                                           QVector<Vector3d> &PtSecondBot, QVector<Vector3d> &NormalSecondBot,
                                           QVector<double> &skinThicknessTop, QVector<double>  &skinThicknessBot,
                                           int outputStyle);
+        uint32_t stitchBrace(QDataStream &outStreamData, QTextStream &outStreamText, bool &binaryOut,
+                  int pointsAroundCircle, double radius, Vector3d p0, Vector3d p1,
+                  bool cutout, Vector3d &offset, float& unit);
         uint32_t exportSTL3dPrintable(QDataStream &outStreamData, QTextStream &outStreamText, bool binaryOut,
                                   int CHORDPANELS, int SPANPANELS,
                                   int outputStyle, float unit);
