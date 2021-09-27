@@ -259,6 +259,10 @@ class Wing
         void exportSTLTriangle3dPrintable(QDataStream &outStreamData, QTextStream &outStreamText, bool binaryOut,
                                           Vector3d Pt0, Vector3d Pt1, Vector3d Pt2, Vector3d N, Vector3d offset, float unit);
         void swap(Vector3d& p0, Vector3d& p1);
+        int stitchWingSurface(QDataStream &outStreamData, QTextStream &outStreamText, bool &binaryOut,
+                                 QVector<Vector3d> &PtLeft, QVector<Vector3d> &NormalA,
+                                 QVector<Vector3d> &PtRight, QVector<Vector3d> &NormalB,
+                                 double tau, double tauA, double tauB, Vector3d &offset, float& unit, bool reverse);
         int stitchFoilFace(QDataStream &outStreamData, QTextStream &outStreamText, bool &binaryOut, bool bRightCap,
                            QVector<Vector3d> &PtTopLeft, QVector<Vector3d> &PtBotLeft,
                            QVector<Vector3d> &PtTopRight, QVector<Vector3d> &PtBotRight,
@@ -276,6 +280,12 @@ class Wing
                                           QVector<Vector3d> &PtSecondBot, QVector<Vector3d> &NormalSecondBot,
                                           QVector<double> &skinThicknessTop, QVector<double>  &skinThicknessBot,
                                           int outputStyle);
+<<<<<<< Updated upstream
+=======
+        uint32_t stitchBrace(QDataStream &outStreamData, QTextStream &outStreamText, bool &binaryOut,
+                  int pointsAroundCircle, double radius, Vector3d p0, Vector3d p1,
+                  int type, Vector3d &offset, float& unit);
+>>>>>>> Stashed changes
         uint32_t exportSTL3dPrintable(QDataStream &outStreamData, QTextStream &outStreamText, bool binaryOut,
                                   int CHORDPANELS, int SPANPANELS,
                                   int outputStyle, float unit);

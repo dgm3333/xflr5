@@ -40,6 +40,12 @@ constexpr int PRINTABLE = 1;
 constexpr int RIBSONLY = 2;
 constexpr int MOLD = 3;
 
+constexpr int BRACECUTOUT = 0;
+constexpr int BRACEPRINTED = 1;
+
+constexpr double mm = 0.001;
+
+
 double Wing::s_MinPanelSize = 0.0001;
 QVector<Foil *> *Wing::s_poaFoil  = nullptr;
 QVector<Polar*> *Wing::s_poaPolar = nullptr;
@@ -3057,7 +3063,9 @@ void Wing::exportSTLText(QTextStream &outStream, int CHORDPANELS, int SPANPANELS
 }
 
 
-
+// identify the intersection point of two lines: AB and CD
+// intended to be used to identify the point the internal skin top and bottom surfaces should join at the trailing edge 
+// in order to maintain skin thickness
 Vector3d Wing::foilXZIntersection(Vector3d A, Vector3d B, Vector3d C, Vector3d D)
 {
     // Line AB represented as a1x + b1z = c1
@@ -3210,6 +3218,42 @@ void Wing::swap(Vector3d& p0, Vector3d& p1)
     Vector3d pTmp = p0;
     p0 = p1;
     p1 = pTmp;
+}
+
+
+int Wing::stitchWingSurface(QDataStream &outStreamData, QTextStream &outStreamText, bool &binaryOut,
+                         QVector<Vector3d> &PtLeft, QVector<Vector3d> &NormalA,
+                         QVector<Vector3d> &PtRight, QVector<Vector3d> &NormalB,
+                         double tau, double tauA, double tauB, Vector3d &offset, float& unit, bool reverse)
+{
+    qDebug() << "stitchWingSurface - start";
+    uint32_t iTriangles = 0;
+    Vector3d Pt0, Pt1, Pt2;
+
+    //Work back chordwise (from LE to TE) and split each rectangular panel into two triangles
+    for(int ic=0; ic<PtLeft.size()-2; ic++)
+    {
+        Vector3d N = (NormalA[ic]+NormalA[ic+1]) * (1.0-tau) + (NormalB[ic]+NormalB[ic+1]) * tau;
+        N.normalize();
+
+        //1st triangle
+        Pt0 = PtLeft[ic]   * (1.0-tauA) + PtRight[ic]   * tauA;
+        Pt1 = PtLeft[ic+1] * (1.0-tauA) + PtRight[ic+1] * tauA;
+        Pt2 = PtLeft[ic]   * (1.0-tauB) + PtRight[ic]   * tauB;
+        exportSTLTriangle3dPrintable(outStreamData, outStreamText, binaryOut, Pt0, Pt1, Pt2, N, offset, unit, reverse);
+
+
+        //2nd triangle
+        Pt0 = PtLeft[ic]   * (1.0-tauB) + PtRight[ic]   * tauB;
+        Pt1 = PtLeft[ic+1] * (1.0-tauA) + PtRight[ic+1] * tauA;
+        Pt2 = PtLeft[ic+1] * (1.0-tauB) + PtRight[ic+1] * tauB;
+        exportSTLTriangle3dPrintable(outStreamData, outStreamText, binaryOut, Pt0, Pt1, Pt2, N, offset, unit, reverse);
+
+        iTriangles +=2;
+    }
+
+    qDebug() << "stitchWingSurface - end";
+    return iTriangles;
 }
 
 /**
@@ -3377,6 +3421,110 @@ int Wing::stitchSkinEdge(QDataStream &outStreamData, QTextStream &outStreamText,
 }
 
 
+<<<<<<< Updated upstream
+=======
+// generate a bracing cylinder through the rib (ie generally oriented along the line of the wing - in the y direction)
+// if this is located with p0.y and p1.y located to run internally so the ends are directed "outward" it will create a cutout
+// otherwise it will form a solid brace
+// alignToY will cause the endface to be locked to the y plane (to ensure it is flush with rib faces)
+uint32_t Wing::stitchBrace(QDataStream &outStreamData, QTextStream &outStreamText, bool &binaryOut,
+          int pointsAroundRim, double radius, Vector3d pLeft, Vector3d pRight,
+          int type, Vector3d &offset, float& unit)
+{
+    //TODO: Theoretically this should create an ovoid when the brace doesn't go directly parallel to the y-axis
+    // but it's not that sophisticated yet
+
+    qDebug() << "stitchBrace";
+    qDebug() << "pLeft { " << pLeft.x << "," << pLeft.y << ","  << pLeft.z << " }" ;
+    qDebug() << "pRight { " << pRight.x << "," << pRight.y << ","  << pRight.z << " }" ;
+
+
+    uint32_t nTriangles = 0;
+
+    constexpr double M_PI = 3.14159265358979323846;
+    constexpr double M_2PI = M_PI * 2.0;
+    constexpr double M_PI14 = M_PI * 0.25;
+    constexpr double M_PI34 = M_PI * 0.75;
+    constexpr double M_PI54 = M_PI * 1.25;
+    constexpr double M_PI74 = M_PI * 1.75;
+
+
+    //If its a cutout then all the points on the circle will be bound to a flange
+    // whic provides 4 standard points at each end for other mesh parts to join to
+    vector<Vector3d> flangeL = {pLeft, pLeft, pLeft, pLeft};
+    flangeL[0].x += radius * 1.5;
+    flangeL[1].x -= radius * 1.5;
+    flangeL[2].z += radius * 1.5;
+    flangeL[3].z -= radius * 1.5;
+    vector<Vector3d> flangeR = {pRight, pRight, pRight, pRight};
+    flangeR[0].x += radius * 1.5;
+    flangeR[1].x -= radius * 1.5;
+    flangeR[2].z += radius * 1.5;
+    flangeR[3].z -= radius * 1.5;
+
+
+    // set the appropriate normal
+    Vector3d NA = { 0, 1, 0};
+    Vector3d NB = { 0, -1, 0};
+
+
+    // step around the rim generating 2 left and 2 right points and writing the appropriate faces for them.
+    for (int i = 0; i < pointsAroundRim; i++)
+    {
+        // generate vertices for four points on the cylinder (
+        double rl0 = (double)i / (double)pointsAroundRim * M_2PI;  // current number of radians around the circle
+        Vector3d l0 = {std::cos(rl0) * radius + pLeft.x, pLeft.y, std::sin(rl0) * radius + pLeft.z};
+
+        double rl1 = ((double)i + 1.0f) / (double)pointsAroundRim * M_2PI;  // current number of radians around the circle
+        Vector3d l1 = {std::cos(rl1) * radius + pLeft.x, pLeft.y, std::sin(rl1) * radius + pLeft.z};
+
+        double rr0 = ((double)i + 1.0f) / (double)pointsAroundRim * M_2PI;  // current number of radians around the circle
+        Vector3d r0 = {std::cos(rr0) * radius + pRight.x, pRight.y, std::sin(rr0) * radius + pRight.z};
+
+        double rr1 = ((double)i + 1.0f) / (double)pointsAroundRim * M_2PI;  // current number of radians around the circle
+        Vector3d r1 = {std::cos(rr1) * radius + pRight.x, pRight.y, std::sin(rr1) * radius + pRight.z};
+
+
+        if (type == BRACECUTOUT) {
+            // join the cylinder rim points to the appropriate flange anchor point
+            if ((rl0 <= M_PI14) | (rl0 > M_PI74)) {
+                exportSTLTriangle3dPrintable(outStreamData, outStreamText, binaryOut, flangeL[0], l1, l0, NA, offset, unit);
+                exportSTLTriangle3dPrintable(outStreamData, outStreamText, binaryOut, flangeR[0], r0, r1, NB, offset, unit);
+            } else if ((rl0 > M_PI14) | (rl0 <= M_PI34)) {
+                exportSTLTriangle3dPrintable(outStreamData, outStreamText, binaryOut, flangeL[3], l1, l0, NA, offset, unit);
+                exportSTLTriangle3dPrintable(outStreamData, outStreamText, binaryOut, flangeR[3], r0, r1, NB, offset, unit);
+            } else if ((rl0 > M_PI34) | (rl0 <= M_PI54)) {
+                exportSTLTriangle3dPrintable(outStreamData, outStreamText, binaryOut, flangeL[1], l1, l0, NA, offset, unit);
+                exportSTLTriangle3dPrintable(outStreamData, outStreamText, binaryOut, flangeR[1], r0, r1, NB, offset, unit);
+            } else if ((rl0 > M_PI54) | (rl0 <= M_PI74)) {
+                exportSTLTriangle3dPrintable(outStreamData, outStreamText, binaryOut, flangeL[2], l1, l0, NA, offset, unit);
+                exportSTLTriangle3dPrintable(outStreamData, outStreamText, binaryOut, flangeR[2], r0, r1, NB, offset, unit);
+            }
+
+            // create the faces along the length of the cylinder
+            exportSTLTriangle3dPrintable(outStreamData, outStreamText, binaryOut, l0, l1, r0, NA, offset, unit, true);
+            exportSTLTriangle3dPrintable(outStreamData, outStreamText, binaryOut, l1, r1, r0, NB, offset, unit, true);
+
+        } else {
+            // join the cylinder rim points to the appropriate centre point
+            exportSTLTriangle3dPrintable(outStreamData, outStreamText, binaryOut, pLeft, l1, l0, NA, offset, unit);
+            exportSTLTriangle3dPrintable(outStreamData, outStreamText, binaryOut, pRight, r0, r1, NB, offset, unit);
+
+            // create the faces along the length of the cylinder
+            exportSTLTriangle3dPrintable(outStreamData, outStreamText, binaryOut, l0, l1, r0, NA, offset, unit);
+            exportSTLTriangle3dPrintable(outStreamData, outStreamText, binaryOut, l1, r1, r0, NB, offset, unit);
+
+        }
+
+
+        nTriangles += 4;
+    }
+
+    return nTriangles;
+}
+
+
+>>>>>>> Stashed changes
 /**
  * Export the wing geometry to a file in STL Format (either binary or text).
  * This is a 3d printable wing - ie with a skin on the inside
@@ -3396,11 +3544,6 @@ uint32_t Wing::exportSTL3dPrintable(QDataStream &outStreamData, QTextStream &out
 {
 
 
-
-
-    //Number of triangles
-    uint32_t nTriangles = m_Surface.count() * CHORDPANELS * SPANPANELS * 2 *2
-                     + 2* ((CHORDPANELS-2)*2 + 2);
 
     if (binaryOut) {
         //Use STL Binary Format Output
@@ -3425,9 +3568,11 @@ uint32_t Wing::exportSTL3dPrintable(QDataStream &outStreamData, QTextStream &out
         // TODO: Number of triangles is clearly not going to be correct. Because it's going to be unfeasible to predict in advance
         // we will need to seek back to this location and overwrite it after all the triangles have been counted
         // this is done in miarex.cpp after the function returns
-        char buffer[4];
-        memcpy(buffer, &nTriangles, sizeof(uint32_t));
-        outStreamData.writeRawData(buffer, sizeof(uint32_t));
+//        char buffer[4];
+//  uint32_t zero = 0;
+//        memcpy(buffer, zero, sizeof(uint32_t));
+//        outStreamData.writeRawData(buffer, sizeof(uint32_t));
+        outStreamData.writeRawData("0000", sizeof(uint32_t));
 
     } else {
 
@@ -3501,6 +3646,11 @@ uint32_t Wing::exportSTL3dPrintable(QDataStream &outStreamData, QTextStream &out
 
     double ribThickness = 0.003;        // TODO: adjust the rib thickness depending on the force that each panel experiences
     QVector<double> ribLocations;       // This means use could manually set them or autospace them as desired
+<<<<<<< Updated upstream
+=======
+    double skinStrainReliefRadius = 0.0005;
+    double skinStrainReliefPoints = 5;
+>>>>>>> Stashed changes
     double ribSpacing = 0.05;
 
 
@@ -3510,7 +3660,10 @@ uint32_t Wing::exportSTL3dPrintable(QDataStream &outStreamData, QTextStream &out
 
     //int numberOfRibs = (surf.spanLength()/(double)ribSpacing);
 
-//    bool resinDrainageHoles = false;    // (not yet implemented) add triangular projections/cutouts at top and bottom of wing to allow resin drainage (and/or alignment keys)
+    vector<uint16_t> resinDrainageHoles = { 1 };    // add triangular projections/cutouts at top and bottom of wing to allow resin drainage (and/or alignment keys)
+                                                                  //  these will be angled 45deg
+//    resinDrainageHoles[1] = (uint16_t)(CHORDPANELS / 2 + 1);
+
 //    double resinDrainageHoleClearance = 0.0f;  // how much gap to leave between hole and peg?
 //    bool alignmentPegs = false;    // (not yet implemented) add pyramidal projections/cutouts  at inner surface of leading/trailing edge to improve alignment
 //    bool numberOfAlignmentPegs = false;    // keys will be distributed around the wing
@@ -3532,19 +3685,26 @@ uint32_t Wing::exportSTL3dPrintable(QDataStream &outStreamData, QTextStream &out
         Vector3d p0;
         Vector3d p1;
         double radius;
+<<<<<<< Updated upstream
         int type = 0;   // 0 = cutout; 1 = printed (currently only cutout braces are supported)
+=======
+        int type = BRACECUTOUT;   // BRACECUTOUT, BRACEPRINTED
+>>>>>>> Stashed changes
         int shape = 0;   // 0 = cylindrical (currently only cylindrical braces are supported)
-        int vertexCount = 0;
+        int vertexCount = 25;    // setting to 3 = triangular brace, 4 = square brace, lots = a cylinder
     };
     QVector<brace> braces;      // shift to being a property of the wing
 
 
     // create a test brace. NB Braces will not be correctly modeled if they penetrate the wing surface
     braces.push_back({});
-    braces[0].p0 = {0.0, 0.0, 0.0};
-    braces[0].p1 = {1.0, 0.0, 0.0};
-    braces[0].radius = 0.05f;
+    braces[0].p0 = PtPrimaryTopLeft[0];        //   {0.0, 0.0, 0.0};
+    braces[0].p0.x - 5*mm;
+    braces[0].p1 = PtPrimaryTopRight[0];         //{1.0, 0.0, 0.0};
+    braces[0].p1.x - 5*mm;
 
+    braces[0].radius = 2.5*mm;
+    braces[0].vertexCount = 25;
 
 
 
@@ -3717,99 +3877,28 @@ uint32_t Wing::exportSTL3dPrintable(QDataStream &outStreamData, QTextStream &out
                     tauC = double(distanceFromSectionLeft+ribThickness) / double(surf.m_Length);
                 double tau = (tauA+tauB)/2.0;
 
-
                 //primary top surface
-                for(int ic=0; ic<CHORDPANELS; ic++)
-                {
-                    N = (NormalPrimaryTopA[ic]+NormalPrimaryTopA[ic+1]) * (1.0-tau) + (NormalPrimaryTopB[ic]+NormalPrimaryTopB[ic+1]) * tau;
-                    N.normalize();
-
-                    //1st triangle
-                    Pt0 = PtPrimaryTopLeft[ic]   * (1.0-tauA) + PtPrimaryTopRight[ic]   * tauA;
-                    Pt1 = PtPrimaryTopLeft[ic+1] * (1.0-tauA) + PtPrimaryTopRight[ic+1] * tauA;
-                    Pt2 = PtPrimaryTopLeft[ic]   * (1.0-tauB) + PtPrimaryTopRight[ic]   * tauB;
-                    exportSTLTriangle3dPrintable(outStreamData, outStreamText, binaryOut, Pt0, Pt1, Pt2, N, offset, unit);
-
-
-                    //2nd triangle
-                    Pt0 = PtPrimaryTopLeft[ic]   * (1.0-tauB) + PtPrimaryTopRight[ic]   * tauB;
-                    Pt1 = PtPrimaryTopLeft[ic+1] * (1.0-tauA) + PtPrimaryTopRight[ic+1] * tauA;
-                    Pt2 = PtPrimaryTopLeft[ic+1] * (1.0-tauB) + PtPrimaryTopRight[ic+1] * tauB;
-                    exportSTLTriangle3dPrintable(outStreamData, outStreamText, binaryOut, Pt0, Pt1, Pt2, N, offset, unit);
-                    iTriangles +=2;
-                }
-
+                iTriangles += stitchWingSurface(outStreamData, outStreamText, binaryOut,
+                         PtPrimaryTopLeft, NormalPrimaryTopA, PtPrimaryTopRight, NormalPrimaryTopB,
+                        tau, tauA, tauB, offset, unit, false);
                 //primary bottom surface
-                for(int ic=0; ic<CHORDPANELS; ic++)
-                {
-                    //left side vertices
-                    N = (NormalPrimaryBotA[ic]+NormalPrimaryBotA[ic+1]) * (1.0-tau) + (NormalPrimaryBotB[ic]+NormalPrimaryBotB[ic+1]) * tau;
-                    N.normalize();
-
-                    //1st triangle
-                    Pt0 = PtPrimaryBotLeft[ic]   * (1.0-tauA) + PtPrimaryBotRight[ic]   * tauA;
-                    Pt1 = PtPrimaryBotLeft[ic+1] * (1.0-tauA) + PtPrimaryBotRight[ic+1] * tauA;
-                    Pt2 = PtPrimaryBotLeft[ic]   * (1.0-tauB) + PtPrimaryBotRight[ic]   * tauB;
-                    //exportSTLTextTriangle(outStreamText, N, Pt0, Pt1, Pt2);
-                    exportSTLTriangle3dPrintable(outStreamData, outStreamText, binaryOut, Pt0, Pt1, Pt2, N, offset, unit);
-
-                    //2nd triangle
-                    Pt0 = PtPrimaryBotLeft[ic+1] * (1.0-tauA) + PtPrimaryBotRight[ic+1] * tauA;
-                    Pt1 = PtPrimaryBotLeft[ic+1] * (1.0-tauB) + PtPrimaryBotRight[ic+1] * tauB;
-                    Pt2 = PtPrimaryBotLeft[ic]   * (1.0-tauB) + PtPrimaryBotRight[ic]   * tauB;
-                    //exportSTLTextTriangle(outStreamText, N, Pt0, Pt1, Pt2);
-                    exportSTLTriangle3dPrintable(outStreamData, outStreamText, binaryOut, Pt0, Pt1, Pt2, N, offset, unit);
-                    iTriangles +=2;
-                }
+                iTriangles += stitchWingSurface(outStreamData, outStreamText, binaryOut,
+                         PtPrimaryBotLeft, NormalPrimaryBotA, PtPrimaryBotRight, NormalPrimaryBotB,
+                         tau, tauA, tauB, offset, unit, true);
 
                 if (tauC <= tauB)      // if the rib projects beyond the end of the section then don't create an inner skin
                 {
                     capIsNeeded = true;
+
                     //secondary top surface
-                    outStreamText << "secondary top surface\n";
-                    for(int ic=0; ic<CHORDPANELS; ic++)
-                    {
-                        N = (NormalSecondTopA[ic]+NormalSecondTopA[ic+1]) * (1.0-tau) + (NormalSecondTopB[ic]+NormalSecondTopB[ic+1]) * tau;
-                        N.normalize();
-
-                        //1st triangle
-                        Pt0 = PtSecondTopLeft[ic]   * (1.0-tauC) + PtSecondTopRight[ic]   * tauC;
-                        Pt1 = PtSecondTopLeft[ic+1] * (1.0-tauC) + PtSecondTopRight[ic+1] * tauC;
-                        Pt2 = PtSecondTopLeft[ic]   * (1.0-tauB) + PtSecondTopRight[ic]   * tauB;
-                        exportSTLTriangle3dPrintable(outStreamData, outStreamText, binaryOut, Pt0, Pt1, Pt2, N, offset, unit);
-
-
-                        //2nd triangle
-                        Pt0 = PtSecondTopLeft[ic]   * (1.0-tauB) + PtSecondTopRight[ic]   * tauB;
-                        Pt1 = PtSecondTopLeft[ic+1] * (1.0-tauC) + PtSecondTopRight[ic+1] * tauC;
-                        Pt2 = PtSecondTopLeft[ic+1] * (1.0-tauB) + PtSecondTopRight[ic+1] * tauB;
-                        exportSTLTriangle3dPrintable(outStreamData, outStreamText, binaryOut, Pt0, Pt1, Pt2, N, offset, unit);
-                        iTriangles +=2;
-                    }
-
+                    iTriangles += stitchWingSurface(outStreamData, outStreamText, binaryOut,
+                             PtSecondTopLeft, NormalSecondTopA, PtSecondTopRight, NormalSecondTopB,
+                             tau, tauC, tauB, offset, unit, true);
                     //secondary bottom surface
-                    outStreamText << "secondary bot surface\n";
-                    for(int ic=0; ic<CHORDPANELS; ic++)
-                    {
-                        //left side vertices
-                        N = (NormalSecondBotA[ic]+NormalSecondBotA[ic+1]) * (1.0-tau) + (NormalSecondBotB[ic]+NormalSecondBotB[ic+1]) * tau;
-                        N.normalize();
+                    iTriangles += stitchWingSurface(outStreamData, outStreamText, binaryOut,
+                             PtSecondBotLeft, NormalSecondBotA, PtSecondBotRight, NormalSecondBotB,
+                             tau, tauC, tauB, offset, unit, true);
 
-                        //1st triangle
-                        Pt0 = PtSecondBotLeft[ic]   * (1.0-tauC) + PtSecondBotRight[ic]   * tauC;
-                        Pt1 = PtSecondBotLeft[ic+1] * (1.0-tauC) + PtSecondBotRight[ic+1] * tauC;
-                        Pt2 = PtSecondBotLeft[ic]   * (1.0-tauB) + PtSecondBotRight[ic]   * tauB;
-                        //exportSTLTextTriangle(outStreamText, N, Pt0, Pt1, Pt2);
-                        exportSTLTriangle3dPrintable(outStreamData, outStreamText, binaryOut, Pt0, Pt1, Pt2, N, offset, unit);
-
-                        //2nd triangle
-                        Pt0 = PtSecondBotLeft[ic+1] * (1.0-tauC) + PtSecondBotRight[ic+1] * tauC;
-                        Pt1 = PtSecondBotLeft[ic+1] * (1.0-tauB) + PtSecondBotRight[ic+1] * tauB;
-                        Pt2 = PtSecondBotLeft[ic]   * (1.0-tauB) + PtSecondBotRight[ic]   * tauB;
-                        //exportSTLTextTriangle(outStreamText, N, Pt0, Pt1, Pt2);
-                        exportSTLTriangle3dPrintable(outStreamData, outStreamText, binaryOut, Pt0, Pt1, Pt2, N, offset, unit);
-                        iTriangles +=2;
-                    }
                 }
 
                 distanceFromSectionLeft+=sizePerPanel;
@@ -3840,8 +3929,55 @@ uint32_t Wing::exportSTL3dPrintable(QDataStream &outStreamData, QTextStream &out
                         int bracePenetrations = 0;
                         for (auto& brace : braces) {
                             // if the brace contacts the rib it will be treated as full penetration
+<<<<<<< Updated upstream
                             if ((brace.p0.x <= dfslAtRibRoot + ribThickness) & (brace.p1.x >= dfslAtRibRoot))
                                 bracePenetrations++;
+=======
+                            if ((brace.p0.y <= dfslAtRibRoot + ribThickness) & (brace.p1.y >= dfslAtRibRoot)) {
+
+                                bracePenetrations++;
+                                Vector3d braceLen = brace.p1 - brace.p0;
+
+                                double braceTauA, braceTauB;
+                                Vector3d bracePLeft, bracePRight;
+                                if (brace.type == BRACEPRINTED) {
+                                    //braceTauA
+
+                                    braceTauA = (sectionRootDistanceFromWingRoot + dfslAtRibRoot  + ribThickness - brace.p0.y) / braceLen.y;
+                                    braceTauB = (sectionRootDistanceFromWingRoot + dfslAtRibRoot + (double)panelsPerDivision * sizePerPanel - brace.p0.y) / braceLen.y;
+                                    if (braceTauB > 1.0)
+                                        braceTauB = 1.0;
+
+                                    bracePLeft = braceLen * braceTauA;
+                                    bracePRight = braceLen * braceTauB;
+
+                                } else {    // default is BRACECUTOUT
+
+                                    braceTauA = (sectionRootDistanceFromWingRoot + dfslAtRibRoot - brace.p0.y) / braceLen.y;
+                                    braceTauB = (sectionRootDistanceFromWingRoot + dfslAtRibRoot  + ribThickness - brace.p0.y) / braceLen.y;
+
+                                    bracePLeft = braceLen * braceTauA;
+                                    bracePRight = braceLen * braceTauB;
+
+                                }
+                                iTriangles += stitchBrace(outStreamData, outStreamText, binaryOut,
+                                          brace.vertexCount, brace.radius + braceCutoutClearance, bracePLeft, bracePRight,
+                                          brace.type, offset, unit);
+
+                                /*
+                                double braceLengthY = brace.p0.y - brace.p1.y;
+                                double tauBraceA = (sectionRootDistanceFromWingRoot + dfslAtRibRoot - brace.p0.y) / braceLengthY;
+                                double tauBraceB = (sectionRootDistanceFromWingRoot + dfslAtRibRoot + ribThickness - brace.p0.y) / braceLengthY;
+
+                                Vector3d p0 = {1,1,1};
+                                Vector3d p1 = {1,1,1};
+
+                                iTriangles += stitchBrace(outStreamData, outStreamText, binaryOut,
+                                          bracePointsAroundRim, brace.radius + braceCutoutClearance, p0, p1,
+                                          brace.cutout, offset, unit);
+                                */
+                            }
+>>>>>>> Stashed changes
                         }
 
                         if (bracePenetrations == 0) {
@@ -3927,7 +4063,9 @@ uint32_t Wing::exportSTL3dPrintable(QDataStream &outStreamData, QTextStream &out
         outStreamText <<  "endsolid " + name + "\n";
     }
 
-    return nTriangles;
+    qDebug() << "Written: " << iTriangles << " faces";
+
+    return iTriangles;
 }
 
 
