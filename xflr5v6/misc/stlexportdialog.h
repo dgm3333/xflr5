@@ -30,6 +30,7 @@
 
 class Plane;
 class IntEdit;
+class DoubleEdit;
 
 class STLExportDlg : public QDialog
 {
@@ -49,6 +50,11 @@ class STLExportDlg : public QDialog
         static int s_NSpanPanels;
         static int s_iObject;
 
+        // 3d printable items
+        static double s_dRibSpacing;
+        static double s_dRibThickness;
+        static double s_dSkinThickness;
+
     private:
         void setupLayout();
         void connectSignals();
@@ -67,6 +73,12 @@ class STLExportDlg : public QDialog
         QLabel *m_plabChordLabel, *m_plabSpanLabel;
 
         QDialogButtonBox *m_pButtonBox;
+
+        // 3d printable items
+        QLabel *m_plabRibSpacing, *m_plabRibThickness, *m_plabSkinThickness;
+        DoubleEdit *m_pdeRibSpacing, *m_pdeRibThickness, *m_pdeSkinThickness;
+
+
 };
 
 

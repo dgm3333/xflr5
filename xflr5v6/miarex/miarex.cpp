@@ -7878,21 +7878,23 @@ void Miarex::onExporttoSTL()
                 out.setByteOrder(QDataStream::LittleEndian);
                 QTextStream outDummy;
 
-                float nTriangles = pWing(STLExportDlg::s_iObject-1)->exportSTL3dPrintable(out, outDummy, bBinary,
+                uint32_t iTriangles = pWing(STLExportDlg::s_iObject-1)->exportSTL3dPrintable(out, outDummy, bBinary,
                       STLExportDlg::s_NChordPanels, STLExportDlg::s_NSpanPanels,
                       STLExportDlg::s_i3dOutputStyle, float(Units::mtoUnit()));
 
-                // binary version of STL file requires the number of faces to be written at pos 81
-                // we didn't know what it was when the file was originally written so write it now
-                XFile.seek(81);
+                // binary version of STL file requires the number of faces to be written directly after the 80 byte header
+                // we didn't know what it was when the file was originally written so seek back and overwrite it now
+                XFile.seek(80);
                 char buffer[4];
-                memcpy(buffer, &nTriangles, sizeof(uint32_t));
+                memcpy(buffer, &iTriangles, sizeof(uint32_t));
                 out.writeRawData(buffer, sizeof(uint32_t));
-
-
             }
             else
             {
+                m_pCurPlane->wing()->ribSpacing = STLExportDlg::s_dRibSpacing;
+                m_pCurPlane->wing()->ribThickness = STLExportDlg::s_dRibThickness;
+                m_pCurPlane->wing()->skinThickness = STLExportDlg::s_dSkinThickness;
+
                 if (!XFile.open(QIODevice::WriteOnly | QIODevice::Text)) return ;
                 QTextStream out(&XFile);
                 QDataStream outDummy;

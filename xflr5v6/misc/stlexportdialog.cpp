@@ -28,6 +28,7 @@
 
 #include "stlexportdialog.h"
 #include <xflwidgets/customwts/intedit.h>
+#include <xflwidgets/customwts/doubleedit.h>
 #include <xflobjects/objects3d/plane.h>
 
 bool STLExportDlg::s_bBinary = false;
@@ -35,6 +36,11 @@ int STLExportDlg::s_i3dOutputStyle = 0;
 int STLExportDlg::s_iObject = 0;
 int STLExportDlg::s_NChordPanels = 13;
 int STLExportDlg::s_NSpanPanels = 17;
+
+// 3d printable items
+double STLExportDlg::s_dRibSpacing = 0.05f;
+double STLExportDlg::s_dRibThickness = 0.002f;
+double STLExportDlg::s_dSkinThickness = 0.0005f;
 
 STLExportDlg::STLExportDlg()
 {
@@ -83,6 +89,47 @@ void STLExportDlg::setupLayout()
             }
             pExportFormatPrintable->setLayout(pFormatPrintableLayout);
         }
+
+
+        QGroupBox *pDimensionsBox = new QGroupBox(tr("3D printable dimensions"));
+        {
+            QVBoxLayout *pDimensionsLayout = new QVBoxLayout;
+            {
+                QHBoxLayout *pRibLayout = new QHBoxLayout;
+                {
+                    m_plabRibSpacing = new QLabel("Rib Spacing");
+                    m_plabRibSpacing->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
+                    m_pdeRibSpacing = new DoubleEdit();
+                    m_pdeRibSpacing->setAlignment(Qt::AlignRight);
+                    pRibLayout->addStretch();
+                    pRibLayout->addWidget(m_plabRibSpacing);
+                    pRibLayout->addWidget(m_pdeRibSpacing);
+
+                    m_plabRibThickness = new QLabel("Rib Thickness");
+                    m_plabRibThickness->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
+                    m_pdeRibThickness = new DoubleEdit();
+                    m_pdeRibThickness->setAlignment(Qt::AlignRight);
+                    pRibLayout->addStretch();
+                    pRibLayout->addWidget(m_plabRibThickness);
+                    pRibLayout->addWidget(m_pdeRibThickness);
+                }
+                QHBoxLayout *pSkinLayout = new QHBoxLayout;
+                {
+                    m_plabSkinThickness = new QLabel("Skin Thickness");
+                    m_plabSkinThickness->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
+                    m_pdeSkinThickness = new DoubleEdit();
+                    m_pdeSkinThickness->setAlignment(Qt::AlignRight);
+                    pSkinLayout->addStretch();
+                    pSkinLayout->addWidget(m_plabSkinThickness);
+                    pSkinLayout->addWidget(m_pdeSkinThickness);
+                }
+                pDimensionsLayout->addLayout(pRibLayout);
+                pDimensionsLayout->addLayout(pSkinLayout);
+
+            }
+            pDimensionsBox->setLayout(pDimensionsLayout);
+        }
+
 
         QGroupBox *pObjectBox = new QGroupBox(tr("Object to export"));
         {
@@ -140,6 +187,7 @@ void STLExportDlg::setupLayout()
 
         pMainLayout->addWidget(pExportFormat);
         pMainLayout->addWidget(pExportFormatPrintable);
+        pMainLayout->addWidget(pDimensionsBox);
         pMainLayout->addWidget(pObjectBox);
         pMainLayout->addWidget(pResolutionBox);
         pMainLayout->addStretch();
@@ -151,6 +199,12 @@ void STLExportDlg::setupLayout()
 
 void STLExportDlg::connectSignals()
 {
+
+    // 3d printable items
+    connect(m_pdeRibSpacing, SIGNAL(editingFinished()), this, SLOT(onReadParams()));
+    connect(m_pdeRibThickness, SIGNAL(editingFinished()), this, SLOT(onReadParams()));
+    connect(m_pdeSkinThickness, SIGNAL(editingFinished()), this, SLOT(onReadParams()));
+
     connect(m_pieChordPanels, SIGNAL(editingFinished()), this, SLOT(onReadParams()));
     connect(m_pieSpanPanels,  SIGNAL(editingFinished()), this, SLOT(onReadParams()));
 }
@@ -175,9 +229,15 @@ void STLExportDlg::initDialog(Plane *pPlane)
 
     m_prbBinary->setChecked(s_bBinary);
     m_prbASCII->setChecked(!s_bBinary);
+
+    // 3d printable items
     m_prb3dGraphic->setChecked(false);
     m_prb3dPrintable->setChecked(true);
     m_prb2dPrintable->setChecked(false);
+    m_pdeRibSpacing->setValue(s_dRibSpacing);
+    m_pdeRibThickness->setValue(s_dRibThickness);
+    m_pdeSkinThickness->setValue(s_dSkinThickness);
+
 
     m_pieChordPanels->setValue(s_NChordPanels);
     m_pieSpanPanels->setValue(s_NSpanPanels);
@@ -200,12 +260,18 @@ void STLExportDlg::initDialog(Plane *pPlane)
 void STLExportDlg::onReadParams()
 {
     s_bBinary = m_prbBinary->isChecked();
+
+    // 3d printable items
     if (m_prb3dGraphic->isChecked())
         s_i3dOutputStyle = 0;
     if (m_prb3dPrintable->isChecked())
         s_i3dOutputStyle = 1;
     if (m_prb2dPrintable->isChecked())
         s_i3dOutputStyle = 2;
+    s_dRibSpacing = m_pdeRibSpacing->value();
+    s_dRibThickness = m_pdeRibThickness->value();
+    s_dSkinThickness = m_pdeSkinThickness->value();
+
     s_NChordPanels = m_pieChordPanels->value();
     s_NSpanPanels  = m_pieSpanPanels->value();
     for(int i=0; i<5; i++)

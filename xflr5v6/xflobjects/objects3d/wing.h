@@ -61,6 +61,8 @@ class PointMass;
 class WPolar;
 class Panel;
 
+
+
 class Wing
 {
     friend class Objects3D;
@@ -251,25 +253,18 @@ class Wing
         bool serializeWingWPA(QDataStream &ar, bool bIsStoring);
         bool serializeWingXFL(QDataStream &ar, bool bIsStoring);
 
+
+        // STL Output Functions
         void exportSTLBinaryTriangle(QDataStream &outStream, Vector3d N, Vector3d Pt0, Vector3d Pt1, Vector3d Pt2, float unit);
         void exportSTLBinary(QDataStream &outStream, int CHORDPANELS, int SPANPANELS, float unit);
         void exportSTLTextTriangle(QTextStream &outStream, Vector3d N, Vector3d Pt0, Vector3d Pt1, Vector3d Pt2);
         void exportSTLText(QTextStream &outStream, int CHORDPANELS, int SPANPANELS);
 
+        // 3D Printing Functions
         void exportSTLTriangle3dPrintable(QDataStream &outStreamData, QTextStream &outStreamText, bool binaryOut,
                                           Vector3d Pt0, Vector3d Pt1, Vector3d Pt2, Vector3d N, Vector3d offset, float unit,
                                           bool reverse=false);
-        void swap(Vector3d& p0, Vector3d& p1);
-        int stitchFoilFace(QDataStream &outStreamData, QTextStream &outStreamText, bool &binaryOut, bool bRightCap,
-                           QVector<Vector3d> &PtTopLeft, QVector<Vector3d> &PtBotLeft,
-                           QVector<Vector3d> &PtTopRight, QVector<Vector3d> &PtBotRight,
-                           double tau, Vector3d &offset, float& unit);
-        int stitchSkinEdge(QDataStream &outStreamData, QTextStream &outStreamText, bool &binaryOut, bool bRightCap, int outputStyle,
-                                 QVector<Vector3d> &PtPrimaryTopLeft, QVector<Vector3d> &PtPrimaryBotLeft,
-                                 QVector<Vector3d> &PtPrimaryTopRight, QVector<Vector3d> &PtPrimaryBotRight,
-                                 QVector<Vector3d> &PtSecondTopLeft, QVector<Vector3d> &PtSecondBotLeft,
-                                 QVector<Vector3d> &PtSecondTopRight, QVector<Vector3d> &PtSecondBotRight,
-                                 double tau, Vector3d &offset, float& unit);
+
         Vector3d foilXZIntersection(Vector3d A, Vector3d B, Vector3d C, Vector3d D);
         void generateSecondSkinFoilPoints(QVector<Vector3d> &PtPrimaryTop, QVector<Vector3d> &NormalPrimaryTop,
                                           QVector<Vector3d> &PtPrimaryBot, QVector<Vector3d> &NormalPrimaryBot,
@@ -277,12 +272,30 @@ class Wing
                                           QVector<Vector3d> &PtSecondBot, QVector<Vector3d> &NormalSecondBot,
                                           QVector<double> &skinThicknessTop, QVector<double>  &skinThicknessBot,
                                           int outputStyle);
+
+        uint32_t stitchWingSurface(QDataStream &outStreamData, QTextStream &outStreamText, bool &binaryOut,
+                                 QVector<Vector3d> &PtLeft, QVector<Vector3d> &NormalA,
+                                 QVector<Vector3d> &PtRight, QVector<Vector3d> &NormalB,
+                                 double tau, double tauA, double tauB, Vector3d &offset, float& unit, bool reverse);
+        uint32_t stitchFoilFace(QDataStream &outStreamData, QTextStream &outStreamText, bool &binaryOut, bool bRightCap,
+                           QVector<Vector3d> &PtTopLeft, QVector<Vector3d> &PtBotLeft,
+                           QVector<Vector3d> &PtTopRight, QVector<Vector3d> &PtBotRight,
+                           double tau, Vector3d &offset, float& unit);
+        uint32_t stitchSkinEdge(QDataStream &outStreamData, QTextStream &outStreamText, bool &binaryOut, bool bRightCap, int outputStyle,
+                                 QVector<Vector3d> &PtPrimaryTopLeft, QVector<Vector3d> &PtPrimaryBotLeft,
+                                 QVector<Vector3d> &PtPrimaryTopRight, QVector<Vector3d> &PtPrimaryBotRight,
+                                 QVector<Vector3d> &PtSecondTopLeft, QVector<Vector3d> &PtSecondBotLeft,
+                                 QVector<Vector3d> &PtSecondTopRight, QVector<Vector3d> &PtSecondBotRight,
+                                 double tau, Vector3d &offset, float& unit);
+
         uint32_t stitchSpar(QDataStream &outStreamData, QTextStream &outStreamText, bool &binaryOut,
                   int pointsAroundRim, double radius, Vector3d pLeft, Vector3d pRight,
                   int type, Vector3d &offset, float& unit);
+
         uint32_t exportSTL3dPrintable(QDataStream &outStreamData, QTextStream &outStreamText, bool binaryOut,
                                   int CHORDPANELS, int SPANPANELS,
                                   int outputStyle, float unit);
+
 
         Foil* foil(const QString &strFoilName);
 
@@ -372,6 +385,17 @@ class Wing
         Vector3d m_Vd[MAXSPANSTATIONS];             /**< the downwash vector at span stations */
         Vector3d m_F[MAXSPANSTATIONS];              /**< the lift vector at span stations */
 
+        // 3d printing variables
+        static constexpr double mm = 0.001;
+        static constexpr int STDMESH = 0;
+        static constexpr int PRINTABLE = 1;
+        static constexpr int RIBSONLY = 2;
+        static constexpr int MOLD = 3;
+
+        static constexpr int SPARCUTOUT = 0;
+        static constexpr int SPARPRINTED = 1;
+
+
     public:
         QVector<WingSection> m_Section;            /**< the array of wing sections. A WingSection extends between a foil and the next. */
         QVector<PointMass> m_PointMass;            /**< the array of PointMass objects associated to this Wing object*/
@@ -396,6 +420,55 @@ class Wing
 
         static QVector<Foil*> *s_poaFoil;
         static QVector<Polar*> *s_poaPolar;
+
+
+
+        // 3D Printing Variables
+
+        // When proven working and useful these should be editable in the dialog box code to enable user modification
+//        Vector3d printerSize = { 0.132, 0.074, 0.130 };       // Maximum printbounds (ie size of the printer)
+
+    //    bool ribsOnly = false;                // generate only ribs (useful for 2d printing or lasercutting)
+    //    bool ribAlignmentMarkers = false;     // add lines on the ribs to help vertical/horizontal alignment
+
+        double skinThickness = 0.0*mm;        // TODO: adjust the skin thickness depending on the force that each panel experiences
+                                            // (but I'm not sure how to access that data from this )
+
+        double skinStrainReliefRadius = 0.5*mm;
+        double skinStrainReliefPoints = 5;
+
+        double partZSpacing = 1.1;     // the maximum z-height of the rib is multiplied by this to allow a gap between parts.
+                                        // decrease/increase to shink/grow the gap between rib divisions
+
+
+        QVector<double> ribLocations;       // This means use could manually set them or autospace them as desired
+        double ribSpacing = 50*mm;          // if ribLocations haven't been set then this will autoset them to even spacing
+        double ribThickness = 2*mm;
+
+        //int numberOfRibs = (surf.spanLength()/(double)ribSpacing);
+
+    //    bool resinDrainageHoles = false;    // (not yet implemented) add triangular projections/cutouts at top and bottom of wing to allow resin drainage (and/or alignment keys)
+    //    double resinDrainageHoleClearance = 0.0f;  // how much gap to leave between hole and peg?
+    //    bool alignmentPegs = false;    // (not yet implemented) add pyramidal projections/cutouts  at inner surface of leading/trailing edge to improve alignment
+    //    bool numberOfAlignmentPegs = false;    // keys will be distributed around the wing
+    //    double alignmentPegClearance = 0.0f;  // how much gap to leave between hole and peg?
+
+        double sparCutoutClearance = 0.0f;
+    //    double sparCollarHeight = 0.0f;         // how long should the tube be?
+    //    double sparCollarThickness = 0.0f;      // how thick should the tube wall be?
+
+
+        struct spar {
+            Vector3d pL;            // p0 be to the left of p1.
+            Vector3d pR;
+            double radius;
+            int type = SPARCUTOUT;   // BRACECUTOUT, BRACEPRINTED
+            int shape = 0;   // 0 = cylindrical (currently only cylindrical braces are supported)
+            int vertexCount = 25;    // setting to 3 = triangular brace, 4 = square brace, lots = a cylinder
+        };
+        QVector<spar> spars;      // shift to being a property of the wing
+
+
 };
 
 
