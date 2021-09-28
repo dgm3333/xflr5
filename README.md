@@ -23,9 +23,9 @@ The stl output can be opened in your favorite printing or editing software (Prus
 
 
 <p align="middle"><p>
-  <img src="https://github.com/dgm3333/xflr5/doc/STLExport.png" title="Export to STL" />
-  <img src="https://github.com/dgm3333/xflr5/doc/STLExport.png" title="Dialog Box" />
-  <img src="https://github.com/dgm3333/xflr5/doc/STLoutput.png" title="STL Output" />
+  <img src="https://github.com/dgm3333/xflr5/blob/main/doc/STLExport.png" title="Export to STL" />
+  <img src="https://github.com/dgm3333/xflr5/blob/main/doc/STLExport.png" title="Dialog Box" />
+  <img src="https://github.com/dgm3333/xflr5/blob/main/doc/STLoutput.png" title="STL Output" />
 </p>
 
 
