@@ -277,9 +277,9 @@ class Wing
                                           QVector<Vector3d> &PtSecondBot, QVector<Vector3d> &NormalSecondBot,
                                           QVector<double> &skinThicknessTop, QVector<double>  &skinThicknessBot,
                                           int outputStyle);
-        uint32_t stitchBrace(QDataStream &outStreamData, QTextStream &outStreamText, bool &binaryOut,
-                  int pointsAroundCircle, double radius, Vector3d p0, Vector3d p1,
-                  bool cutout, Vector3d &offset, float& unit);
+        uint32_t stitchSpar(QDataStream &outStreamData, QTextStream &outStreamText, bool &binaryOut,
+                  int pointsAroundRim, double radius, Vector3d pLeft, Vector3d pRight,
+                  int type, Vector3d &offset, float& unit);
         uint32_t exportSTL3dPrintable(QDataStream &outStreamData, QTextStream &outStreamText, bool binaryOut,
                                   int CHORDPANELS, int SPANPANELS,
                                   int outputStyle, float unit);

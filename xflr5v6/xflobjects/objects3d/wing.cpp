@@ -40,6 +40,11 @@ constexpr int PRINTABLE = 1;
 constexpr int RIBSONLY = 2;
 constexpr int MOLD = 3;
 
+constexpr int SPARCUTOUT = 0;
+constexpr int SPARPRINTED = 1;
+
+constexpr double mm = 0.001;
+
 double Wing::s_MinPanelSize = 0.0001;
 QVector<Foil *> *Wing::s_poaFoil  = nullptr;
 QVector<Polar*> *Wing::s_poaPolar = nullptr;
@@ -3384,16 +3389,21 @@ int Wing::stitchSkinEdge(QDataStream &outStreamData, QTextStream &outStreamText,
 
 // generate a bracing cylinder through the rib (ie generally oriented along the line of the wing - in the y direction)
 // if this is located with p0.y and p1.y located to run internally so the ends are directed "outward" it will create a cutout
-// otherwise it will form a solid brace
+// otherwise it will form a solid spar
 // alignToY will cause the endface to be locked to the y plane (to ensure it is flush with rib faces)
-uint32_t Wing::stitchBrace(QDataStream &outStreamData, QTextStream &outStreamText, bool &binaryOut,
-          int pointsAroundRim, double radius, Vector3d p0, Vector3d p1,
-          bool cutout, Vector3d &offset, float& unit)
+uint32_t Wing::stitchSpar(QDataStream &outStreamData, QTextStream &outStreamText, bool &binaryOut,
+          int pointsAroundRim, double radius, Vector3d pLeft, Vector3d pRight,
+          int type, Vector3d &offset, float& unit)
 {
-    //Theoretically this should create an ovoid when the brace doesn't go directly parallel to the y-axis
+    //TODO: Theoretically this should create an ovoid when the spar doesn't go directly parallel to the y-axis
     // but it's not that sophisticated yet
 
-    uint32_t nTriangles = 0;
+    qDebug() << "stitchSpar";
+    qDebug() << "pLeft { " << pLeft.x << "," << pLeft.y << ","  << pLeft.z << " }" ;
+    qDebug() << "pRight { " << pRight.x << "," << pRight.y << ","  << pRight.z << " }" ;
+
+
+    uint32_t iTriangles = 0;
 
     constexpr double M_PI = 3.14159265358979323846;
     constexpr double M_2PI = M_PI * 2.0;
@@ -3405,12 +3415,12 @@ uint32_t Wing::stitchBrace(QDataStream &outStreamData, QTextStream &outStreamTex
 
     //If its a cutout then all the points on the circle will be bound to a flange
     // whic provides 4 standard points at each end for other mesh parts to join to
-    vector<Vector3d> flangeL = {p0, p0, p0, p0};
+    vector<Vector3d> flangeL = {pLeft, pLeft, pLeft, pLeft};
     flangeL[0].x += radius * 1.5;
     flangeL[1].x -= radius * 1.5;
     flangeL[2].z += radius * 1.5;
     flangeL[3].z -= radius * 1.5;
-    vector<Vector3d> flangeR = {p1, p1, p1, p1};
+    vector<Vector3d> flangeR = {pRight, pRight, pRight, pRight};
     flangeR[0].x += radius * 1.5;
     flangeR[1].x -= radius * 1.5;
     flangeR[2].z += radius * 1.5;
@@ -3427,48 +3437,54 @@ uint32_t Wing::stitchBrace(QDataStream &outStreamData, QTextStream &outStreamTex
     {
         // generate vertices for four points on the cylinder (
         double rl0 = (double)i / (double)pointsAroundRim * M_2PI;  // current number of radians around the circle
-        Vector3d l0 = {std::cos(rl0) * radius + p0.x, p0.y, std::sin(rl0) * radius + p0.x};
+        Vector3d l0 = {std::cos(rl0) * radius + pLeft.x, pLeft.y, std::sin(rl0) * radius + pLeft.z};
 
         double rl1 = ((double)i + 1.0f) / (double)pointsAroundRim * M_2PI;  // current number of radians around the circle
-        Vector3d l1 = {std::cos(rl1) * radius + p0.x, p0.y, std::sin(rl1) * radius + p0.x};
+        Vector3d l1 = {std::cos(rl1) * radius + pLeft.x, pLeft.y, std::sin(rl1) * radius + pLeft.z};
 
         double rr0 = ((double)i + 1.0f) / (double)pointsAroundRim * M_2PI;  // current number of radians around the circle
-        Vector3d r0 = {std::cos(rr0) * radius + p1.x, p1.y, std::sin(rr0) * radius + p1.x};
+        Vector3d r0 = {std::cos(rr0) * radius + pRight.x, pRight.y, std::sin(rr0) * radius + pRight.z};
 
         double rr1 = ((double)i + 1.0f) / (double)pointsAroundRim * M_2PI;  // current number of radians around the circle
-        Vector3d r1 = {std::cos(rr1) * radius + p1.x, p1.y, std::sin(rr1) * radius + p1.x};
+        Vector3d r1 = {std::cos(rr1) * radius + pRight.x, pRight.y, std::sin(rr1) * radius + pRight.z};
 
 
-        if (cutout) {
+        if (type == SPARCUTOUT) {
             // join the cylinder rim points to the appropriate flange anchor point
-            if (rl0 <= M_PI14 or rl0 > M_PI74) {
+            if ((rl0 <= M_PI14) | (rl0 > M_PI74)) {
                 exportSTLTriangle3dPrintable(outStreamData, outStreamText, binaryOut, flangeL[0], l1, l0, NA, offset, unit);
                 exportSTLTriangle3dPrintable(outStreamData, outStreamText, binaryOut, flangeR[0], r0, r1, NB, offset, unit);
-            } else if (rl0 > M_PI14 or rl0 <= M_PI34) {
+            } else if ((rl0 > M_PI14) | (rl0 <= M_PI34)) {
                 exportSTLTriangle3dPrintable(outStreamData, outStreamText, binaryOut, flangeL[3], l1, l0, NA, offset, unit);
                 exportSTLTriangle3dPrintable(outStreamData, outStreamText, binaryOut, flangeR[3], r0, r1, NB, offset, unit);
-            } else if (rl0 > M_PI34 or rl0 <= M_PI54) {
+            } else if ((rl0 > M_PI34) | (rl0 <= M_PI54)) {
                 exportSTLTriangle3dPrintable(outStreamData, outStreamText, binaryOut, flangeL[1], l1, l0, NA, offset, unit);
                 exportSTLTriangle3dPrintable(outStreamData, outStreamText, binaryOut, flangeR[1], r0, r1, NB, offset, unit);
-            } else if (rl0 > M_PI54 or rl0 <= M_PI74) {
+            } else if ((rl0 > M_PI54) | (rl0 <= M_PI74)) {
                 exportSTLTriangle3dPrintable(outStreamData, outStreamText, binaryOut, flangeL[2], l1, l0, NA, offset, unit);
                 exportSTLTriangle3dPrintable(outStreamData, outStreamText, binaryOut, flangeR[2], r0, r1, NB, offset, unit);
             }
 
+            // create the faces along the length of the cylinder
+            exportSTLTriangle3dPrintable(outStreamData, outStreamText, binaryOut, l0, l1, r0, NA, offset, unit, true);
+            exportSTLTriangle3dPrintable(outStreamData, outStreamText, binaryOut, l1, r1, r0, NB, offset, unit, true);
+
         } else {
             // join the cylinder rim points to the appropriate centre point
-            exportSTLTriangle3dPrintable(outStreamData, outStreamText, binaryOut, p0, l1, l0, NA, offset, unit);
-            exportSTLTriangle3dPrintable(outStreamData, outStreamText, binaryOut, p1, r0, r1, NB, offset, unit);
+            exportSTLTriangle3dPrintable(outStreamData, outStreamText, binaryOut, pLeft, l1, l0, NA, offset, unit);
+            exportSTLTriangle3dPrintable(outStreamData, outStreamText, binaryOut, pRight, r0, r1, NB, offset, unit);
+
+            // create the faces along the length of the cylinder
+            exportSTLTriangle3dPrintable(outStreamData, outStreamText, binaryOut, l0, l1, r0, NA, offset, unit);
+            exportSTLTriangle3dPrintable(outStreamData, outStreamText, binaryOut, l1, r1, r0, NB, offset, unit);
+
         }
 
-        // create the faces along the length of the cylinder
-        exportSTLTriangle3dPrintable(outStreamData, outStreamText, binaryOut, l0, l1, r0, NA, offset, unit, cutout);
-        exportSTLTriangle3dPrintable(outStreamData, outStreamText, binaryOut, l1, r1, r0, NB, offset, unit, cutout);
 
-        nTriangles += 4;
+        iTriangles += 4;
     }
 
-    return nTriangles;
+    return iTriangles;
 }
 
 
@@ -3613,9 +3629,9 @@ uint32_t Wing::exportSTL3dPrintable(QDataStream &outStreamData, QTextStream &out
 //    bool numberOfAlignmentPegs = false;    // keys will be distributed around the wing
 //    double alignmentPegClearance = 0.0f;  // how much gap to leave between hole and peg?
 
-    int bracePointsAroundRim = 20;
-    double braceCutoutClearance = 0.0f;
-    // (not yet implemented) generate a tubular collar (aka flange) at the brace hole to thicken the rib and support the brace cutouts
+    int sparPointsAroundRim = 20;
+    double sparCutoutClearance = 0.0f;
+    // (not yet implemented) generate a tubular collar (aka flange) at the spar hole to thicken the rib and support the spar cutouts
 //    double bracingCollarHeight = 0.0f;         // how long should the tube be?
 //    double bracingCollarThickness = 0.0f;      // how thick should the tube wall be?
 
@@ -3627,22 +3643,22 @@ uint32_t Wing::exportSTL3dPrintable(QDataStream &outStreamData, QTextStream &out
 
 
 
-    struct brace {
+    struct spar {
         Vector3d p0;
         Vector3d p1;
         double radius;
         bool cutout = true;   // true = cutout of something else; true = solid printed
-        int shape = 0;   // 0 = cylindrical (currently only cylindrical braces are supported)
+        int shape = 0;   // 0 = cylindrical (currently only cylindrical spars are supported)
         int vertexCount = 0;
     };
-    QVector<brace> braces;      // shift to being a property of the wing
+    QVector<spar> spars;      // shift to being a property of the wing
 
 
-    // create a test brace. NB Braces will not be correctly modeled if they penetrate the wing surface
-    braces.push_back({});
-    braces[0].p0 = {0.0, 0.0, 0.0};
-    braces[0].p1 = {1.0, 0.0, 0.0};
-    braces[0].radius = 0.05f;
+    // create a test spar. NB Spars will not be correctly modeled if they penetrate the wing surface
+    spars.push_back({});
+    spars[0].p0 = {0.0, 0.0, 0.0};
+    spars[0].p1 = {0.0, 0.5, 0.0};
+    spars[0].radius = 2.5 * mm;
 
 
 
@@ -3937,33 +3953,33 @@ uint32_t Wing::exportSTL3dPrintable(QDataStream &outStreamData, QTextStream &out
                     {
 
 
-                        // Generate brace cutouts if they penetrate this rib?
-                        int bracePenetrations = 0;
-                        for (auto& brace : braces) {
-                            // if the brace contacts the rib it will be treated as full penetration
-                            if ((brace.p0.y <= dfslAtRibRoot + ribThickness) & (brace.p1.y >= dfslAtRibRoot)) {
-                                bracePenetrations++;
+                        // Generate spar cutouts if they penetrate this rib?
+                        int sparPenetrations = 0;
+                        for (auto& spar : spars) {
+                            // if the spar contacts the rib it will be treated as full penetration
+                            if ((spar.p0.y <= dfslAtRibRoot + ribThickness) & (spar.p1.y >= dfslAtRibRoot)) {
+                                sparPenetrations++;
 
-                                iTriangles += stitchBrace(outStreamData, outStreamText, binaryOut,
-                                          bracePointsAroundRim, brace.radius + braceCutoutClearance, brace.p0, brace.p1,
-                                          brace.cutout, offset, unit);
+                                iTriangles += stitchSpar(outStreamData, outStreamText, binaryOut,
+                                          sparPointsAroundRim, spar.radius + sparCutoutClearance, spar.p0, spar.p1,
+                                          spar.cutout, offset, unit);
 
                                 /*
-                                double braceLengthY = brace.p0.y - brace.p1.y;
-                                double tauBraceA = (sectionRootDistanceFromWingRoot + dfslAtRibRoot - brace.p0.y) / braceLengthY;
-                                double tauBraceB = (sectionRootDistanceFromWingRoot + dfslAtRibRoot + ribThickness - brace.p0.y) / braceLengthY;
+                                double sparLengthY = spar.p0.y - spar.p1.y;
+                                double tauSparA = (sectionRootDistanceFromWingRoot + dfslAtRibRoot - spar.p0.y) / sparLengthY;
+                                double tauSparB = (sectionRootDistanceFromWingRoot + dfslAtRibRoot + ribThickness - spar.p0.y) / sparLengthY;
 
                                 Vector3d p0 = {1,1,1};
                                 Vector3d p1 = {1,1,1};
 
-                                iTriangles += stitchBrace(outStreamData, outStreamText, binaryOut,
-                                          bracePointsAroundRim, brace.radius + braceCutoutClearance, p0, p1,
-                                          brace.cutout, offset, unit);
+                                iTriangles += stitchSpar(outStreamData, outStreamText, binaryOut,
+                                          sparPointsAroundRim, spar.radius + sparCutoutClearance, p0, p1,
+                                          spar.cutout, offset, unit);
                                 */
                             }
                         }
 
-                        if (bracePenetrations == 0) {
+                        if (sparPenetrations == 0) {
                             // generate the rib face in contact with the printer buildplate
                             iTriangles += stitchFoilFace(outStreamData, outStreamText, binaryOut, isRHS,
                                            PtPrimaryTopLeft, PtPrimaryBotLeft, PtPrimaryTopRight, PtPrimaryBotRight,
@@ -3979,18 +3995,18 @@ uint32_t Wing::exportSTL3dPrintable(QDataStream &outStreamData, QTextStream &out
                         else
                         {
 
-                            for (auto& brace : braces) {
+                            for (auto& spar : spars) {
 
 
                             }
 
 
 
-                            // We'll need to stitch to the surface of the brace
-                            float braceVertexAv = 0.0;
-                            braceVertexAv = (2*CHORDPANELS+2) / bracePenetrations;
+                            // We'll need to stitch to the surface of the spar
+                            float sparVertexAv = 0.0;
+                            sparVertexAv = (2*CHORDPANELS+2) / sparPenetrations;
 
-                            // TODO: for the moment we're just going to stitch top and bottom surfaces directly - will sort out the brace penetration later
+                            // TODO: for the moment we're just going to stitch top and bottom surfaces directly - will sort out the spar penetration later
                             iTriangles += stitchFoilFace(outStreamData, outStreamText, binaryOut, isRHS,
                                            PtPrimaryTopLeft, PtPrimaryBotLeft, PtPrimaryTopRight, PtPrimaryBotRight,
                                            tauRibRoot, offset, unit);
