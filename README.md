@@ -17,14 +17,10 @@ You should be able to run the current windows version by copying xflr5_3dprintin
 You can then open your project and select "Export to STL" in the R click menu from the wing name in the Object Explorer
 The stl output can be opened in your favorite printing or editing software (Prusa, Blender, etc)
 
-[Export to STL](doc/STLExport.png)
-[Dialog Box](doc/STLExport.png)
-[STL Output](doc/STLoutput.png)
-
 
 <p align="middle"><p>
   <img src="https://github.com/dgm3333/xflr5/blob/main/doc/STLExport.png" title="Export to STL" />
-  <img src="https://github.com/dgm3333/xflr5/blob/main/doc/STLExport.png" title="Dialog Box" />
+  <img src="https://github.com/dgm3333/xflr5/blob/main/doc/STLdlg.png" title="Dialog Box" />
   <img src="https://github.com/dgm3333/xflr5/blob/main/doc/STLoutput.png" title="STL Output" />
 </p>
 
