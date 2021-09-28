@@ -22,6 +22,12 @@ The stl output can be opened in your favorite printing or editing software (Prus
 [STL Output](doc/STLoutput.png)
 
 
+<p align="middle"><p>
+  <img src="doc/STLExport.png" title="Export to STL" />
+  <img src="doc/STLExport.png" title="Dialog Box" />
+  <img src="doc/STLoutput.png" title="STL Output" />
+</p>
+
 
 Alternatively you can compile it from the github source in the same way you can with the original xflr5 as follows:-
 
