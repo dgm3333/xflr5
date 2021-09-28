@@ -9,13 +9,21 @@ It would be very safe to assume the original Sourceforge version will be more up
 The original binaries and sourcecode can be accessed from https://sourceforge.net/projects/xflr5/
 
 
+NB This is a work in progress - it is currently at the status of "barely functional"
+
+
 
 You should be able to run the current windows version by copying xflr5_3dprinting.exe from the root of this repository into the original xflr5 installation directory.
 You can then open your project and select "Export to STL" in the R click menu from the wing name in the Object Explorer
+The stl output can be opened in your favorite printing or editing software (Prusa, Blender, etc)
+
+[Export to STL](doc/STLExport.png)
+[Dialog Box](doc/STLExport.png)
+[STL Output](doc/STLoutput.png)
 
 
 
-Alterntively you can compile it from the github source in the same way you can with the original xflr5 as follows:-
+Alternatively you can compile it from the github source in the same way you can with the original xflr5 as follows:-
 
 
 Install QT Creator - either the community/opensource or the professional version.
