@@ -3239,6 +3239,7 @@ void Wing::generateSecondSkinFoilPoints(QVector<Vector3d> &PtPrimaryTop, QVector
 uint32_t Wing::stitchWingSurface(QDataStream &outStreamData, QTextStream &outStreamText, bool &binaryOut,
                          QVector<Vector3d> &PtLeft, QVector<Vector3d> &NormalA,
                          QVector<Vector3d> &PtRight, QVector<Vector3d> &NormalB,
+                         QVector<double> &resinDrainageHoles, double resinDrainageHoleWH,
                          double tau, double tauA, double tauB, Vector3d &offset, float& unit, bool reverse)
 {
     //qDebug() << "stitchWingSurface - start";
@@ -3249,6 +3250,43 @@ uint32_t Wing::stitchWingSurface(QDataStream &outStreamData, QTextStream &outStr
 
 //    for (int i = 0; i<PtLeft.size(); i++)
 //        qDebug() << "ys: " << PtLeft[i].y << "," << PtRight[i].y;
+
+    struct rdhStruct {
+        double rdhLoc;
+        double startX;
+        double endX;
+        int startIc=-1;
+        int endIc=-1;
+    };
+    QVector<rdhStruct> rdh(resinDrainageHoles.size());
+
+    // identify where resin drainage holes should be placed
+    if (resinDrainageHoleWH <= 0) {
+        rdh.clear();
+    } else {
+        // copy the proportion along chord (for convenience)
+        for (int i = 0; i<resinDrainageHoles.size(); i++)
+            rdh[i].rdhLoc = resinDrainageHoles[i];
+
+        // calculate the chord length
+        double LEx = (PtLeft[0] * (1.0-tauA) + PtRight[0] * tauA).x;
+        double TEx = (PtLeft.back() * (1.0-tauA) + PtRight.back() * tauA).x;
+        double chordLength = TEx - LEx;
+
+        // find the x start and end and the foilpoints before and after the location of the drainage hole
+        for (auto& h : rdh) {
+            h.startX = LEx + h.rdhLoc*chordLength - resinDrainageHoleWH/2;
+            h.endX = h.startX + resinDrainageHoleWH;
+            for(int ic=0; ic<PtLeft.size()-1; ic++) {
+                if ((h.startIc == -1) & (PtLeft[ic].x >= h.startX))
+                    h.startIc = ic-1;
+                if ((h.endIc == -1) & (PtLeft[ic].x >= h.endX)) {
+                    h.endIc = ic;
+                    break;
+                }
+            }
+        }
+    }
 
     //Work back chordwise (from LE to TE) and split each rectangular panel into two triangles
     for(int ic=0; ic<PtLeft.size()-1; ic++)
@@ -4304,6 +4342,8 @@ uint32_t Wing::exportSTL3dPrintable(QDataStream &outStreamData, QTextStream &out
 
     // create a test spar. NB Spars will not be correctly modeled if they penetrate the wing surface
     spars.clear();
+/*
+    //DragonWing
     spars.push_back({});
     spars[0].pL = PtPrimaryTopLeft[0];
     spars[0].pL.x += 5*mm;
@@ -4323,6 +4363,37 @@ uint32_t Wing::exportSTL3dPrintable(QDataStream &outStreamData, QTextStream &out
     spars[1].radius = 1.1*mm;
     spars[1].vertexCount = 25;
     spars[1].type = SPARCUTOUT;
+*/
+
+    //TriDrone
+    spars.push_back({});
+    spars[0].pL = PtPrimaryTopLeft[0];
+    spars[0].pL.x += 5*mm;
+    spars[0].pL.z += 0.2*mm;
+    spars[0].pR = PtPrimaryTopRight[0];
+    spars[0].pR.x += 5*mm;
+    spars[0].pL.z += 0.50*mm;
+    spars[0].radius = 1.1*mm;
+    spars[0].vertexCount = 25;
+    spars[0].type = SPARCUTOUT;
+
+    spars.push_back({});
+    spars[1].pL = PtPrimaryTopLeft.back();
+    spars[1].pL.x -= 15*mm;
+    spars[1].pL.z += 0.65*mm;
+    spars[1].pR = PtPrimaryTopRight.back();
+    spars[1].pR.x -= 20*mm;
+    spars[1].pR.z += 0.55*mm;
+    spars[1].radius = 1.1*mm;
+    spars[1].vertexCount = 25;
+    spars[1].type = SPARCUTOUT;
+
+
+    // Resin printers benefit from drainage holes to allow resin vacuum to release
+    // or the print is more prone to failure and distortion.
+    QVector<double> resinDrainageHolesTop;                      // proportion of the chord +ve is top surface, -ve is undersurface
+    QVector<double> resinDrainageHolesBot({-0.25, -0.75});      // proportion of the chord +ve is top surface, -ve is undersurface
+    double resinDrainageHoleWH = 1.0*mm;                    // Hole is a triangle with width=height
 
     // print the entire spar - eg for testing
     //iTriangles += stitchSpar(outStreamData, outStreamText, binaryOut, spars[0], spars[0].pL.y, spars[0].pR.y, offset, unit);
@@ -4487,12 +4558,12 @@ uint32_t Wing::exportSTL3dPrintable(QDataStream &outStreamData, QTextStream &out
 
                 //rib top surface
                 iTriangles += stitchWingSurface(outStreamData, outStreamText, binaryOut,
-                         PtPrimaryTopLeft, NormalPrimaryTopA, PtPrimaryTopRight, NormalPrimaryTopB,
-                        tau, tauA, tauC, offset, unit, false);
+                        PtPrimaryTopLeft, NormalPrimaryTopA, PtPrimaryTopRight, NormalPrimaryTopB,
+                        resinDrainageHolesTop, 0.0, tau, tauA, tauC, offset, unit, false);
                 //rib bottom surface
                 iTriangles += stitchWingSurface(outStreamData, outStreamText, binaryOut,
                          PtPrimaryBotLeft, NormalPrimaryBotA, PtPrimaryBotRight, NormalPrimaryBotB,
-                         tau, tauA, tauC, offset, unit, true);
+                         resinDrainageHolesBot, 0.0, tau, tauA, tauC, offset, unit, true);
 
                 // now fill in the faces
                 if (isRHS) {
@@ -4586,13 +4657,19 @@ uint32_t Wing::exportSTL3dPrintable(QDataStream &outStreamData, QTextStream &out
 
                     double tau = (tauA+tauB)/2.0;
 
+                    double rdhw = 0.0;
+                    if (ppd == 0)
+                        rdhw = resinDrainageHoleWH;
+
                     //primary top surface
                     iTriangles += stitchWingSurface(outStreamData, outStreamText, binaryOut,
                              PtPrimaryTopLeft, NormalPrimaryTopA, PtPrimaryTopRight, NormalPrimaryTopB,
-                            tau, tauA, tauB, offset, unit, false);
+                             resinDrainageHolesTop, rdhw,
+                             tau, tauA, tauB, offset, unit, false);
                     //primary bottom surface
                     iTriangles += stitchWingSurface(outStreamData, outStreamText, binaryOut,
                              PtPrimaryBotLeft, NormalPrimaryBotA, PtPrimaryBotRight, NormalPrimaryBotB,
+                             resinDrainageHolesBot, rdhw,
                              tau, tauA, tauB, offset, unit, true);
 
                     //TODO: add strain relief at the edge attaching to the skin
@@ -4600,10 +4677,12 @@ uint32_t Wing::exportSTL3dPrintable(QDataStream &outStreamData, QTextStream &out
                     //secondary top surface
                     iTriangles += stitchWingSurface(outStreamData, outStreamText, binaryOut,
                              PtSecondTopLeft, NormalSecondTopA, PtSecondTopRight, NormalSecondTopB,
+                             resinDrainageHolesTop, rdhw,
                              tau, tauA, tauB, offset, unit, true);
                     //secondary bottom surface
                     iTriangles += stitchWingSurface(outStreamData, outStreamText, binaryOut,
                              PtSecondBotLeft, NormalSecondBotA, PtSecondBotRight, NormalSecondBotB,
+                             resinDrainageHolesBot, rdhw,
                              tau, tauA, tauB, offset, unit, false);
 
                     distanceFromSectionLeft+=sizePerPanel;
