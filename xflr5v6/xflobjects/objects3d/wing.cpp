@@ -2867,6 +2867,7 @@ void Wing::exportSTLTriangle3dPrintable(QDataStream &outStreamData, QTextStream 
         outStreamData.writeRawData(buffer, 2);
 
     } else {
+        //qDebug() << "offy: " << offset.y << "," << Pt0.y << "," << Pt1.y << "," << Pt2.y;
         //stream the triangle
         outStreamText << QString::asprintf("  facet normal %13.7f  %13.7f  %13.7f\n",  N.x, N.y, N.z);
         outStreamText << "    outer loop\n";
@@ -3094,7 +3095,7 @@ Vector3d Wing::foilXZIntersection(Vector3d A, Vector3d B, Vector3d C, Vector3d D
     if (determinant == 0)
     {
         // The lines are parallel. This is simplified
-        // by returning a pair of FLT_MAX
+        // by returning a Vector3d of FLT_MAX
         return {FLT_MAX, FLT_MAX, FLT_MAX};
     }
     else
@@ -3231,6 +3232,11 @@ uint32_t Wing::stitchWingSurface(QDataStream &outStreamData, QTextStream &outStr
     uint32_t iTriangles = 0;
     Vector3d Pt0, Pt1, Pt2;
 
+    qDebug() << "TAU: " << tau << "," << tauA << "," << tauB;
+
+//    for (int i = 0; i<PtLeft.size(); i++)
+//        qDebug() << "ys: " << PtLeft[i].y << "," << PtRight[i].y;
+
     //Work back chordwise (from LE to TE) and split each rectangular panel into two triangles
     for(int ic=0; ic<PtLeft.size()-2; ic++)
     {
@@ -3260,6 +3266,8 @@ uint32_t Wing::stitchWingSurface(QDataStream &outStreamData, QTextStream &outStr
 
 /**
  * Cap the end of a surface "tube" at an arbitrary distance between two end foils
+ * This efficiently caps a simple set of foils with matching top and bottom points
+ * and no spar penetrations
  *
  * Write the facet data to a file in STL Format.
  * bool binaryOut - whether the function stores binary or text data?
@@ -3280,8 +3288,7 @@ uint32_t Wing::stitchFoilFace(QDataStream &outStreamData, QTextStream &outStream
 
     Vector3d N, Pt0, Pt1, Pt2;
 
-    qDebug() << "stitchFoilFace\n";
-    outStreamText << "stitchFoilFace\n";
+    qDebug() << "stitchFoilFace";
     //for RIBS and TIP PATCHES
 
     int iTriangles = 0;
@@ -3332,6 +3339,359 @@ uint32_t Wing::stitchFoilFace(QDataStream &outStreamData, QTextStream &outStream
     return iTriangles;
 
 }
+
+
+/**
+ * Cap the end of a surface "tube" at an arbitrary distance between two end foils
+ * This efficiently caps a simple set of foils with matching top and bottom points
+ * and no spar penetrations
+ *
+ * Write the facet data to a file in STL Format.
+ * bool binaryOut - whether the function stores binary or text data?
+ * &outStreamData if binaryOut then required for output (else is ignored)
+ * &outStreamText if not binaryOut then required for output (else is ignored)
+ *
+ * Because stl files expect the vertices to be ordered clockwise when facing from the direction of the normal
+ *    there is a Left and a Right version of this function.
+ *
+ *  Returns: the number of triangles written from within this process
+ */
+uint32_t Wing::stitchFoilFaceSpars(QDataStream &outStreamData, QTextStream &outStreamText, bool &binaryOut, bool bRightCap,
+                         QVector<Vector3d> &PtTopLeft, QVector<Vector3d> &PtBotLeft,
+                         QVector<Vector3d> &PtTopRight, QVector<Vector3d> &PtBotRight,
+                         QVector<sparStruct> spars, double y, double tau, Vector3d &offset, float& unit)
+{
+
+
+    Vector3d N, Pt0, Pt1, Pt2;
+
+    qDebug() << "stitchFoilFaceSpars";
+    //for RIBS and TIP PATCHES
+
+    int iTriangles = 0;
+
+    // set the appropriate normal
+    if (bRightCap)
+        N = { 0, 1, 0};
+    else
+        N = { 0, -1, 0};
+
+
+    QVector<QVector<Vector3d>> sparMargins;    // list of points on the spar boundaries
+
+    // generate all the spar points and add them to the sparmargins vector
+    for (auto& s : spars)
+        sparMargins.push_back( generateSparPoints(s, y));
+
+    /*
+    struct bb {
+        double x0 = DBL_MAX;
+        double x1 = DBL_MIN;
+        double z0 = DBL_MAX;
+        double z1 = DBL_MIN;
+
+        uint16_t locX0;
+        uint16_t locX1;
+        uint16_t locZ0;
+        uint16_t locZ1;
+    };
+    bb sparBBs[sparMargins.size()];
+
+    // create the bounding boxes for the spar points
+    for (int sm = 0; sm < sparMargins.size(); sm++) {
+        for (auto& sp : sparMargins[sm]) {
+            if (sparBBs[sm].x0 > sp.x) {
+                sparBBs[sm].x0 = sp.x;
+                sparBBs[sm].locX0 = sm;
+            }
+            if (sparBBs[sm].x1 < sp.x) {
+                sparBBs[sm].x1 = sp.x;
+                sparBBs[sm].locX1 = sm;
+            }
+            if (sparBBs[sm].z0 > sp.z) {
+                sparBBs[sm].z0 = sp.z;
+                sparBBs[sm].locZ0 = sm;
+            }
+            if (sparBBs[sm].z1 < sp.z) {
+                sparBBs[sm].z1 = sp.z;
+                sparBBs[sm].locZ1 = sm;
+            }
+        }
+    }
+*/
+    //L.E. triangle
+    Pt0 = PtBotLeft[0]   * (1.0-tau) + PtBotRight[0]   * tau;
+    Pt1 = PtTopLeft[1] * (1.0-tau) + PtTopRight[1] * tau;
+    Pt2 = PtBotLeft[1] * (1.0-tau) + PtBotRight[1] * tau;
+    exportSTLTriangle3dPrintable(outStreamData, outStreamText, binaryOut, Pt0, Pt1, Pt2, N, offset, unit, bRightCap);
+    iTriangles +=1;
+
+    for(int ic=1; ic<PtTopLeft.size()-2; ic++)
+    {
+        //1st triangle
+        Pt0 = PtBotLeft[ic]   * (1.0-tau) + PtBotRight[ic]   * tau;
+        Pt1 = PtTopLeft[ic] * (1.0-tau) + PtTopRight[ic] * tau;
+        Pt2 = PtTopLeft[ic+1] * (1.0-tau) + PtTopRight[ic+1] * tau;
+        exportSTLTriangle3dPrintable(outStreamData, outStreamText, binaryOut, Pt0, Pt1, Pt2, N, offset, unit, bRightCap);
+
+
+        //2nd triangle
+        Pt0 = PtBotLeft[ic]   * (1.0-tau) + PtBotRight[ic]   * tau;
+        Pt1 = PtTopLeft[ic+1] * (1.0-tau) + PtTopRight[ic+1] * tau;
+        Pt2 = PtBotLeft[ic+1] * (1.0-tau) + PtBotRight[ic+1] * tau;
+        exportSTLTriangle3dPrintable(outStreamData, outStreamText, binaryOut, Pt0, Pt1, Pt2, N, offset, unit, bRightCap);
+
+        iTriangles +=2;
+    }
+
+    //T.E. triangle
+    int ic = PtTopLeft.size()-2;
+    Pt0 = PtBotLeft[ic]   * (1.0-tau) + PtBotRight[ic]   * tau;
+    Pt1 = PtTopLeft[ic] * (1.0-tau) + PtTopRight[ic] * tau;
+    Pt2 = PtBotLeft[ic+1] * (1.0-tau) + PtBotRight[ic+1] * tau;
+    exportSTLTriangle3dPrintable(outStreamData, outStreamText, binaryOut, Pt0, Pt1, Pt2, N, offset, unit, bRightCap);
+
+    iTriangles +=1;
+
+    qDebug() << "iTriangles: " << iTriangles << "\n";
+    outStreamText << "end stitchTopToBottomRight\n";
+    return iTriangles;
+
+}
+
+
+
+
+
+// Given three colinear points p, q, r, the function checks if
+// point q lies on line segment 'pr'
+bool onSegment(Vector3d p, Vector3d q, Vector3d r)
+{
+    if (q.x <= max(p.x, r.x) && q.x >= min(p.x, r.x) &&
+            q.z <= max(p.z, r.z) && q.z >= min(p.z, r.z))
+        return true;
+    return false;
+}
+
+// To find orientation of ordered triplet (p, q, r).
+// The function returns following values
+// 0 --> p, q and r are colinear
+// 1 --> Clockwise
+// 2 --> Counterclockwise
+int orientation(Vector3d p, Vector3d q, Vector3d r)
+{
+    int val = (q.z - p.z) * (r.x - q.x) -
+            (q.x - p.x) * (r.z - q.z);
+
+    if (val == 0) return 0; // colinear
+    return (val > 0)? 1: 2; // clock or counterclock wise
+}
+
+// The function that returns true if line segment 'p1q1'
+// and 'p2q2' intersect.
+bool doIntersect(Vector3d p1, Vector3d q1, Vector3d p2, Vector3d q2)
+{
+    // Find the four orientations needed for general and
+    // special cases
+    int o1 = orientation(p1, q1, p2);
+    int o2 = orientation(p1, q1, q2);
+    int o3 = orientation(p2, q2, p1);
+    int o4 = orientation(p2, q2, q1);
+
+    // General case
+    if (o1 != o2 && o3 != o4)
+        return true;
+
+    // Special Cases
+    // p1, q1 and p2 are colinear and p2 lies on segment p1q1
+    if (o1 == 0 && onSegment(p1, p2, q1)) return true;
+
+    // p1, q1 and p2 are colinear and q2 lies on segment p1q1
+    if (o2 == 0 && onSegment(p1, q2, q1)) return true;
+
+    // p2, q2 and p1 are colinear and p1 lies on segment p2q2
+    if (o3 == 0 && onSegment(p2, p1, q2)) return true;
+
+    // p2, q2 and q1 are colinear and q1 lies on segment p2q2
+    if (o4 == 0 && onSegment(p2, q1, q2)) return true;
+
+    return false; // Doesn't fall in any of the above cases
+}
+
+// Returns true if the point p lies inside the polygon[] with n vertices
+bool isInside(QVector<Vector3d> polygon, Vector3d p)
+{
+    // Define Infinite (Using INT_MAX caused overflow problems)
+    constexpr float INF = 10000.0;
+    int n = polygon.size();
+
+    // There must be at least 3 vertices to make a polygon
+    if (n < 3)
+        return false;
+
+    // Create a point for line segment from p to infinite
+    Vector3d extreme = {INF, p.y, p.z};
+
+    // Count intersections of the above line with sides of polygon
+    int count = 0, i = 0;
+    do
+    {
+        int next = (i+1)%n;
+
+        // Check if the line segment from 'p' to 'extreme' intersects
+        // with the line segment from 'polygon[i]' to 'polygon[next]'
+        if (doIntersect(polygon[i], polygon[next], p, extreme))
+        {
+            // If the point 'p' is colinear with line segment 'i-next',
+            // then check if it lies on segment. If it lies, return true,
+            // otherwise false
+            if (orientation(polygon[i], p, polygon[next]) == 0)
+            return onSegment(polygon[i], p, polygon[next]);
+
+            count++;
+        }
+        i = next;
+    } while (i != 0);
+
+    // Return true if count is odd, false otherwise
+    return count&1; // Same as (count%2 == 1)
+}
+
+
+/**
+ * Cap the end of a surface "tube" at an arbitrary distance between two end foils
+ *
+ * Write the facet data to a file in STL Format.
+ * bool binaryOut - whether the function stores binary or text data?
+ * &outStreamData if binaryOut then required for output (else is ignored)
+ * &outStreamText if not binaryOut then required for output (else is ignored)
+ *
+ * Because stl files expect the vertices to be ordered clockwise when facing from the direction of the normal
+ *    there is a Left and a Right version of this function.
+ *
+ *  Returns: the number of triangles written from within this process
+ */
+uint32_t Wing::stitchFoilFaceComplex(QDataStream &outStreamData, QTextStream &outStreamText, bool &binaryOut, bool bRightCap,
+                         QVector<Vector3d> &PtTopLeft, QVector<Vector3d> &PtBotLeft,
+                         QVector<Vector3d> &PtTopRight, QVector<Vector3d> &PtBotRight,
+                         QVector<sparStruct> spars, double y, double tau, Vector3d &offset, float& unit)
+{
+
+
+    Vector3d N;
+    QVector<Vector3d> outerMargin;      // master list of outside points
+    QVector<Vector3d> innerPts;      // master list of internal spar points
+    QVector<Vector3d> foilMargin;   // list of points on the outer foil margin
+    QVector<QVector<Vector3d>> sparMargins;    // list of points on the spar boundaries
+
+    qDebug() << "stitchFoilFaceComplex";
+
+    int iTriangles = 0;
+
+    // set the appropriate normal
+    if (bRightCap)
+        N = { 0, 1, 0};
+    else
+        N = { 0, -1, 0};
+
+
+    // interpolate the foil points and add to the foilmargin vector
+    // this will get the loop in order starting at the bottom TE -> LE then top LE -> TE
+    for (int ic=PtTopLeft.size()-1; ic>=0; ic--)
+        foilMargin.push_back(PtBotLeft[ic] * (1.0-tau) + PtBotRight[ic] * tau);
+    for (int ic=0; ic<PtTopLeft.size(); ic++)
+        foilMargin.push_back(PtTopLeft[ic] * (1.0-tau) + PtTopRight[ic] * tau);
+
+
+    // generate all the spar points and add them to the sparmargins vector
+    for (auto& s : spars)
+        sparMargins.push_back( generateSparPoints(s, y));
+
+
+    // add any foil points not enclosed by the spars to the outerMargin list
+    for (auto& fp : foilMargin) {
+        bool notInside = true;
+        for (auto& sm : sparMargins) {
+            if (isInside(sm, fp)) {
+                notInside = false;
+                break;
+            }
+        }
+        if (notInside)
+            outerMargin.push_back(fp);
+    }
+
+    /*
+    // check if a spar is entirely within the foil boundary (keep all), entirely outside (drop all), or sliced by the boundary (turn it into a boundary)
+    // based on this discard or add points to the appropriate list
+    // TODO: This should be recursed - if a spars cross over at the boundary...
+    for (auto& sm : sparMargins) {
+        int ptsInside = 0;
+        bool isIn[sm.size()];
+
+        for (int sp=0; sp<sm.size(); sp++) {
+            isIn[sp] = isInside(foilMargin, sm[sp]);
+            if (isIn[sp])
+                ptsInside++;
+        }
+        if (ptsInside == 0) { //entirely outside - TODO: ignoring these unless making a mold
+        } else if (ptsInside == sm.size()) { //entirely inside - add to inner list
+            for (auto& sp : sm) {
+                innerPts.push_back(sp);
+            }
+        } else {   // the spar is bisected by the foil boundary - add the inside points to the boundary master list and dump the others
+            for (int sp=0; sp<sm.size(); sp++) {
+                if (isIn[sp])
+                    outerMargin.push_back(sm[sp]);
+            }
+        }
+    }
+    */
+
+
+
+
+
+
+
+
+    /*
+    // check if the points are all inside the foil margins
+
+
+
+    // average all points to the same Y-plane (this probably isn't required - as foil faces should have been aligned at original generation phase
+    //   but seems easier to do to ensure no issue until all bugs sorted
+    double avY = 0;
+    for (auto& pt : pts)
+        avY+=pt.y;
+    avY/=pts.size();
+    for (auto& pt : pts)
+        pt.y = avY;
+
+
+
+
+
+
+
+    //T.E. triangle
+//    int ic = PtTopLeft.size()-2;
+//    Pt0 = PtBotLeft[ic]   * (1.0-tau) + PtBotRight[ic]   * tau;
+//    Pt1 = PtTopLeft[ic] * (1.0-tau) + PtTopRight[ic] * tau;
+//    Pt2 = PtBotLeft[ic+1] * (1.0-tau) + PtBotRight[ic+1] * tau;
+//    exportSTLTriangle3dPrintable(outStreamData, outStreamText, binaryOut, Pt0, Pt1, Pt2, N, offset, unit, bRightCap);
+
+    iTriangles +=1;
+*/
+
+
+    qDebug() << "iTriangles: " << iTriangles;
+    qDebug() << "end stitchFoilFaceComplex";
+    return iTriangles;
+
+}
+
 
 /**
  * Cap the end of a surface "tube" at an arbitrary distance between two end foils
@@ -3407,32 +3767,71 @@ uint32_t Wing::stitchSkinEdge(QDataStream &outStreamData, QTextStream &outStream
 }
 
 
-// generate a bracing cylinder through the rib (ie generally oriented along the line of the wing - in the y direction)
+// generate the points a spar intersects a given y-plane
+QVector<Vector3d> Wing::generateSparPoints(sparStruct spar, double y)
+{
+    if ((spar.pL.y > y) | (spar.pR.y < y))
+        return {};                      // The spar never intersects this y-plane
+
+    // find the centre of the spar at the point of interest
+    double sparTau = (y - spar.pL.y) / (spar.pR.y - spar.pL.y);
+    Vector3d sparPt = spar.pL + (spar.pR - spar.pL) * sparTau;
+
+    // find the major and minor axes of the ellipse on the y-plane
+//    double a = 0.5*sqrt(pow(2*spar.radius,2) + h*h);
+//    double a = spar.radius * secant(theta);
+//    double b = spar.radius;
+//    double rot = ;        // get the rotation of the ellipse from standard x/y orientation
+    double a = 1.0f;
+    double b = 1.0f;
+    double rot = 0.0f;
+
+
+    QVector<Vector3d>pts;
+
+    // step around the rim of the ellipse generating points
+    for (int i = 0; i < spar.vertexCount; i++)
+    {
+        double rl0 = (double)i / (double)spar.vertexCount * M_2PI + rot;  // current number of radians around the circle
+        Vector3d l0 = {a * std::cos(rl0) * spar.radius + sparPt.x, y, b * std::sin(rl0) * spar.radius + sparPt.z};
+
+        pts.push_back(l0);
+        //qDebug() << "spar: { " << l0.x << "," << l0.y << ","  << l0.z << " }" ;
+    }
+
+    return pts;
+
+}
+
+
+// generate a bracing cylinder (spar) through the rib (ie generally oriented along the line of the wing - in the y direction)
 // if this is located with p0.y and p1.y located to run internally so the ends are directed "outward" it will create a cutout
 // otherwise it will form a solid spar
 // alignToY will cause the endface to be locked to the y plane (to ensure it is flush with rib faces)
 uint32_t Wing::stitchSpar(QDataStream &outStreamData, QTextStream &outStreamText, bool &binaryOut,
-          int pointsAroundRim, double radius, Vector3d pLeft, Vector3d pRight,
-          int type, Vector3d &offset, float& unit)
+          sparStruct spar, double yLeft, double yRight,
+          Vector3d &offset, float& unit)
 {
-    //TODO: Theoretically this should create an ovoid when the spar doesn't go directly parallel to the y-axis
-    // but it's not that sophisticated yet
-
-    qDebug() << "stitchSpar";
-    qDebug() << "pLeft { " << pLeft.x << "," << pLeft.y << ","  << pLeft.z << " }" ;
-    qDebug() << "pRight { " << pRight.x << "," << pRight.y << ","  << pRight.z << " }" ;
-
 
     uint32_t iTriangles = 0;
 
-    constexpr double M_PI = 3.14159265358979323846;
-    constexpr double M_2PI = M_PI * 2.0;
-    constexpr double M_PI14 = M_PI * 0.25;
-    constexpr double M_PI34 = M_PI * 0.75;
-    constexpr double M_PI54 = M_PI * 1.25;
-    constexpr double M_PI74 = M_PI * 1.75;
 
 
+    qDebug() << "stitchSpar";
+//    qDebug() << "pLeft { " << pLeft.x << "," << pLeft.y << ","  << pLeft.z << " }" ;
+//    qDebug() << "pRight { " << pRight.x << "," << pRight.y << ","  << pRight.z << " }" ;
+
+
+
+
+//    constexpr double M_PI = 3.14159265358979323846;
+//    constexpr double M_2PI = M_PI * 2.0;
+//    constexpr double M_PI14 = M_PI * 0.25;
+//    constexpr double M_PI34 = M_PI * 0.75;
+//    constexpr double M_PI54 = M_PI * 1.25;
+//    constexpr double M_PI74 = M_PI * 1.75;
+
+/*
     //If its a cutout then all the points on the circle will be bound to a flange
     // which provides 4 standard points at each end for other mesh parts to join to
     vector<Vector3d> flangeL = {pLeft, pLeft, pLeft, pLeft};
@@ -3445,31 +3844,26 @@ uint32_t Wing::stitchSpar(QDataStream &outStreamData, QTextStream &outStreamText
     flangeR[1].x -= radius * 1.5;
     flangeR[2].z += radius * 1.5;
     flangeR[3].z -= radius * 1.5;
-
+*/
 
     // set the appropriate normal
     Vector3d NA = { 0, 1, 0};
     Vector3d NB = { 0, -1, 0};
 
 
+    qDebug() << "offset: " << offset.x << "," << offset.y << "," << offset.z;
+    // fill vectors with the points around the sparRim
+    QVector<Vector3d> lSR = generateSparPoints(spar, yLeft);
+    QVector<Vector3d> rSR = generateSparPoints(spar, yRight);
+
+
     // step around the rim generating 2 left and 2 right points and writing the appropriate faces for them.
-    for (int i = 0; i < pointsAroundRim; i++)
+    for (int ic = 0; ic < spar.vertexCount-1; ic++)
     {
-        // generate vertices for four points on the cylinder (
-        double rl0 = (double)i / (double)pointsAroundRim * M_2PI;  // current number of radians around the circle
-        Vector3d l0 = {std::cos(rl0) * radius + pLeft.x, pLeft.y, std::sin(rl0) * radius + pLeft.z};
-
-        double rl1 = ((double)i + 1.0f) / (double)pointsAroundRim * M_2PI;  // current number of radians around the circle
-        Vector3d l1 = {std::cos(rl1) * radius + pLeft.x, pLeft.y, std::sin(rl1) * radius + pLeft.z};
-
-        double rr0 = ((double)i + 1.0f) / (double)pointsAroundRim * M_2PI;  // current number of radians around the circle
-        Vector3d r0 = {std::cos(rr0) * radius + pRight.x, pRight.y, std::sin(rr0) * radius + pRight.z};
-
-        double rr1 = ((double)i + 1.0f) / (double)pointsAroundRim * M_2PI;  // current number of radians around the circle
-        Vector3d r1 = {std::cos(rr1) * radius + pRight.x, pRight.y, std::sin(rr1) * radius + pRight.z};
+        if (spar.type == SPARCUTOUT) {
 
 
-        if (type == SPARCUTOUT) {
+/*
             // join the cylinder rim points to the appropriate flange anchor point
             if ((rl0 <= M_PI14) | (rl0 > M_PI74)) {
                 exportSTLTriangle3dPrintable(outStreamData, outStreamText, binaryOut, flangeL[0], l1, l0, NA, offset, unit);
@@ -3484,24 +3878,37 @@ uint32_t Wing::stitchSpar(QDataStream &outStreamData, QTextStream &outStreamText
                 exportSTLTriangle3dPrintable(outStreamData, outStreamText, binaryOut, flangeL[2], l1, l0, NA, offset, unit);
                 exportSTLTriangle3dPrintable(outStreamData, outStreamText, binaryOut, flangeR[2], r0, r1, NB, offset, unit);
             }
-
+*/
             // create the faces along the length of the cylinder
-            exportSTLTriangle3dPrintable(outStreamData, outStreamText, binaryOut, l0, l1, r0, NA, offset, unit, true);
-            exportSTLTriangle3dPrintable(outStreamData, outStreamText, binaryOut, l1, r1, r0, NB, offset, unit, true);
+            exportSTLTriangle3dPrintable(outStreamData, outStreamText, binaryOut, lSR[ic], lSR[ic+1], rSR[ic], NA, offset, unit, true);
+            exportSTLTriangle3dPrintable(outStreamData, outStreamText, binaryOut, lSR[ic+1], rSR[ic+1], rSR[ic], NB, offset, unit, true);
+            iTriangles += 2;
 
         } else {
             // join the cylinder rim points to the appropriate centre point
-            exportSTLTriangle3dPrintable(outStreamData, outStreamText, binaryOut, pLeft, l1, l0, NA, offset, unit);
-            exportSTLTriangle3dPrintable(outStreamData, outStreamText, binaryOut, pRight, r0, r1, NB, offset, unit);
+//            exportSTLTriangle3dPrintable(outStreamData, outStreamText, binaryOut, pLeft, l1, l0, NA, offset, unit);
+//            exportSTLTriangle3dPrintable(outStreamData, outStreamText, binaryOut, pRight, r0, r1, NB, offset, unit);
 
             // create the faces along the length of the cylinder
-            exportSTLTriangle3dPrintable(outStreamData, outStreamText, binaryOut, l0, l1, r0, NA, offset, unit);
-            exportSTLTriangle3dPrintable(outStreamData, outStreamText, binaryOut, l1, r1, r0, NB, offset, unit);
-
+            exportSTLTriangle3dPrintable(outStreamData, outStreamText, binaryOut, lSR[ic], lSR[ic+1], rSR[ic], NA, offset, unit);
+            exportSTLTriangle3dPrintable(outStreamData, outStreamText, binaryOut, lSR[ic+1], rSR[ic+1], rSR[ic], NB, offset, unit);
+            iTriangles += 2;
         }
 
 
-        iTriangles += 4;
+
+    }
+
+    // now close the ring
+    int ic = spar.vertexCount-1;
+    if (spar.type == SPARCUTOUT) {
+        exportSTLTriangle3dPrintable(outStreamData, outStreamText, binaryOut, lSR[ic], lSR[0], rSR[ic], NA, offset, unit, true);
+        exportSTLTriangle3dPrintable(outStreamData, outStreamText, binaryOut, lSR[0], rSR[0], rSR[ic], NB, offset, unit, true);
+        iTriangles += 2;
+    } else {
+        exportSTLTriangle3dPrintable(outStreamData, outStreamText, binaryOut, lSR[ic], lSR[0], rSR[ic], NA, offset, unit);
+        exportSTLTriangle3dPrintable(outStreamData, outStreamText, binaryOut, lSR[0], rSR[0], rSR[ic], NB, offset, unit);
+        iTriangles += 2;
     }
 
     return iTriangles;
@@ -3621,19 +4028,25 @@ uint32_t Wing::exportSTL3dPrintable(QDataStream &outStreamData, QTextStream &out
     skinThicknessTop.fill(skinThickness);   // since we don't know how to set the skin thickness just make it constant
     skinThicknessBot.fill(skinThickness);   // since we don't know how to set the skin thickness just make it constant
 
-/*
+
+    // load this face a bit early to provide a locator for the spar
+    m_Surface[1].getSidePoints(xfl::TOPSURFACE, nullptr, PtPrimaryTopLeft, PtPrimaryTopRight, NormalPrimaryTopA, NormalPrimaryTopB, CHORDPANELS+1);
+
+//    for (int i = 0; i< PtPrimaryTopLeft.size(); i++)
+//        qDebug() << PtPrimaryTopLeft[i].y << "," << PtPrimaryTopRight[i].y;
+
     // create a test spar. NB Spars will not be correctly modeled if they penetrate the wing surface
     spars.push_back({});
 
-    spars[0].pL = PtPrimaryTopLeft[0];        //   {0.0, 0.0, 0.0};
-    spars[0].pL.x - 5*mm;
-    spars[0].pR = PtPrimaryTopRight[0];         //{1.0, 0.0, 0.0};
-    spars[0].pR.x - 5*mm;
+    spars[0].pL = PtPrimaryTopLeft[0];
+    spars[0].pL.x += 5*mm;
+    spars[0].pR = PtPrimaryTopRight[0];
+    spars[0].pR.x += 5*mm;
 
-    spars[0].radius = 2.5*mm;
+    spars[0].radius = 1.0*mm;
     spars[0].vertexCount = 25;
     spars[0].type = SPARCUTOUT;
-*/
+
 
 
 
@@ -3667,6 +4080,7 @@ uint32_t Wing::exportSTL3dPrintable(QDataStream &outStreamData, QTextStream &out
 
 
 
+
     for (int j=1; j<m_Surface.size(); j++)  //
     {
         //outStreamText << "Starting Surface " << j << "\n";
@@ -3681,19 +4095,21 @@ uint32_t Wing::exportSTL3dPrintable(QDataStream &outStreamData, QTextStream &out
         //Get the chordwise points from the foils at the ends of both top and bottom of the current section
         surf.getSidePoints(xfl::TOPSURFACE, nullptr, PtPrimaryTopLeft, PtPrimaryTopRight, NormalPrimaryTopA, NormalPrimaryTopB, CHORDPANELS+1);
         surf.getSidePoints(xfl::BOTSURFACE, nullptr, PtPrimaryBotLeft, PtPrimaryBotRight, NormalPrimaryBotA, NormalPrimaryBotB, CHORDPANELS+1);
-
+//        qDebug() << "chordwise points";
+//        for (int i = 0; i< PtPrimaryTopLeft.size(); i++)
+//            qDebug() << PtPrimaryTopLeft[i].y << "," << PtPrimaryTopRight[i].y << ","  << PtPrimaryBotLeft[i].y << "," << PtPrimaryBotRight[i].y;
 
         //it's critical the ribs are flat on the printbed or they won't stick
-        //so set all of the x-values for the left and right foils to the average value
+        //so set all of the y-values for the left and right foils to the average value
         //this will introduce some distortion, but if it matters could be compensated for by
-        //removing any dihedral angle before running the stl export
+        //removing any dihedral/sweepback angle before running the stl export
         double avY = 0.0;
         for(int ic=0; ic<=CHORDPANELS; ic++)
         {
             avY += PtPrimaryTopLeft[ic].y;
             avY += PtPrimaryBotLeft[ic].y;
         }
-        avY /= CHORDPANELS+1;
+        avY /= (CHORDPANELS+1) * 2;
         for(int ic=0; ic<=CHORDPANELS; ic++) {
             PtPrimaryTopLeft[ic].y = avY;
             PtPrimaryBotLeft[ic].y = avY;
@@ -3705,7 +4121,7 @@ uint32_t Wing::exportSTL3dPrintable(QDataStream &outStreamData, QTextStream &out
             avY += PtPrimaryTopRight[ic].y;
             avY += PtPrimaryBotRight[ic].y;
         }
-        avY /= CHORDPANELS+1;
+        avY /= (CHORDPANELS+1)*2;
         for(int ic=0; ic<=CHORDPANELS; ic++) {
             PtPrimaryTopRight[ic].y = avY;
             PtPrimaryBotRight[ic].y = avY;
@@ -3734,7 +4150,7 @@ uint32_t Wing::exportSTL3dPrintable(QDataStream &outStreamData, QTextStream &out
 
 
 
-        double wingSpan = m_PlanformSpan;
+        double wingSpan = m_PlanformSpan;       //  the planform span, i.e. span if the dihedral was 0 at each junction
         double wingSectionLength = m_Section[j].m_Length;
         double surfaceLength = surf.m_Length;
 
@@ -3766,9 +4182,10 @@ uint32_t Wing::exportSTL3dPrintable(QDataStream &outStreamData, QTextStream &out
             double tauRR = dfslAtRibRoot / surf.m_Length;
             double minX = PtPrimaryTopLeft[0].x * (1.0-tauRR) + PtPrimaryTopRight[0].x * tauRR;
 
-            // each division should be placed flat on the printer bed
-            // TODO: CTO why does y require x2 multiplier - is there a bug somewhere else resulting in this fudge requirement?
-            offset = { -minX, -sectionRootDistanceFromWingRoot-distanceFromSectionLeft*2.0f, zDivisionOffset };
+            // each part/division should be placed flat on the printer bed
+            qDebug() << "offset y: " << sectionRootDistanceFromWingRoot << "," << distanceFromSectionLeft;
+            offset = { -minX, -sectionRootDistanceFromWingRoot-distanceFromSectionLeft, zDivisionOffset };
+
 
             // calculate the z offset for the next printed part (since it keeps related calculations together rather than doing it later)
             double maxZSpan = 0;
@@ -3792,7 +4209,8 @@ uint32_t Wing::exportSTL3dPrintable(QDataStream &outStreamData, QTextStream &out
                 double tauA = distanceFromSectionLeft / surf.m_Length;
                 if (tauA > 1.0)
                     break;
-                double tauC = double(distanceFromSectionLeft+ribThickness) / double(surf.m_Length);
+                double tauC = (double)(distanceFromSectionLeft+ribThickness) / (double)(surf.m_Length);
+                qDebug() << "tauC: " << tauC << "," << distanceFromSectionLeft << "," << ribThickness << "," << surf.m_Length;
                 if (tauC > 1.0)
                     tauC = 1.0f;     // for the last division it can't be further than the full length of the span
                 double tau = (tauA+tauC)/2.0;
@@ -3806,10 +4224,10 @@ uint32_t Wing::exportSTL3dPrintable(QDataStream &outStreamData, QTextStream &out
                          PtPrimaryBotLeft, NormalPrimaryBotA, PtPrimaryBotRight, NormalPrimaryBotB,
                          tau, tauA, tauC, offset, unit, true);
 
-
+                qDebug() << "1";
                 // now fill in the faces
                 if (isRHS) {
-
+                    qDebug() << "2";
                     // tau is the proportional distance along the current span
                     // uses the same A/B logic as Normals (ie A is the left face, B is the right face
                     double tauRibRoot = dfslAtRibRoot / surf.m_Length;
@@ -3817,31 +4235,22 @@ uint32_t Wing::exportSTL3dPrintable(QDataStream &outStreamData, QTextStream &out
 
                     if (outputStyle == PRINTABLE)
                     {
-
-
+                        qDebug() << "3";
                         // Generate spar cutouts if they penetrate this rib?
                         int sparPenetrations = 0;
                         for (auto& spar : spars) {
+                            qDebug() << "4";
+                            qDebug() << spar.pL.y << "," << dfslAtRibRoot << "," << ribThickness << "&" << spar.pR.y << "," << dfslAtRibRoot;
                             // if the spar contacts the rib it will be treated as full penetration
                             if ((spar.pL.y <= dfslAtRibRoot + ribThickness) & (spar.pR.y >= dfslAtRibRoot)) {
                                 sparPenetrations++;
-
+                                qDebug() << "5";
+                                // TODO: eliminate any spars which are not encompassed by the foil boundary
                                 iTriangles += stitchSpar(outStreamData, outStreamText, binaryOut,
-                                          spar.vertexCount, spar.radius + sparCutoutClearance, spar.pL, spar.pR,
-                                          spar.type, offset, unit);
-
-                                /*
-                                double sparLengthY = spar.p0.y - spar.p1.y;
-                                double tauSparA = (sectionRootDistanceFromWingRoot + dfslAtRibRoot - spar.p0.y) / sparLengthY;
-                                double tauSparB = (sectionRootDistanceFromWingRoot + dfslAtRibRoot + ribThickness - spar.p0.y) / sparLengthY;
-
-                                Vector3d p0 = {1,1,1};
-                                Vector3d p1 = {1,1,1};
-
-                                iTriangles += stitchSpar(outStreamData, outStreamText, binaryOut,
-                                          sparPointsAroundRim, spar.radius + sparCutoutClearance, p0, p1,
-                                          spar.cutout, offset, unit);
-                                */
+                                          spar,
+                                          sectionRootDistanceFromWingRoot + dfslAtRibRoot,
+                                          sectionRootDistanceFromWingRoot + dfslAtRibRoot + ribThickness,
+                                          offset, unit);
                             }
                         }
 
@@ -3851,34 +4260,14 @@ uint32_t Wing::exportSTL3dPrintable(QDataStream &outStreamData, QTextStream &out
                                            PtPrimaryTopLeft, PtPrimaryBotLeft, PtPrimaryTopRight, PtPrimaryBotRight,
                                            tauRibRoot, offset, unit);
 
-
                             // generate the rib face linking the top and bottom surfaces of the inner skin
-                            if (skinThickness == 0) {
-                                // If there is no skin the ribs should use the primary foil to ensure the edges go to the outside
-
-                                iTriangles += stitchFoilFace(outStreamData, outStreamText, binaryOut, isRHS,
-                                               PtPrimaryTopLeft, PtPrimaryBotLeft, PtPrimaryTopRight, PtPrimaryBotRight,
-                                               tauRibInner, offset, unit);
-                            } else {
-                                // otherwise there should be a gap between outer and inner so the inner skin is a continuous piece
-                                iTriangles += stitchFoilFace(outStreamData, outStreamText, binaryOut, isRHS,
-                                               PtSecondTopLeft, PtSecondBotLeft, PtSecondTopRight, PtSecondBotRight,
-                                               tauRibInner, offset, unit);
-                            }
+                            iTriangles += stitchFoilFace(outStreamData, outStreamText, binaryOut, isRHS,
+                                           PtSecondTopLeft, PtSecondBotLeft, PtSecondTopRight, PtSecondBotRight,
+                                           tauRibInner, offset, unit);
                         }
                         else
                         {
 
-                            for (auto& spar : spars) {
-
-
-                            }
-
-
-
-                            // We'll need to stitch to the surface of the spar
-                            float sparVertexAv = 0.0;
-                            sparVertexAv = (2*CHORDPANELS+2) / sparPenetrations;
 
                             // TODO: for the moment we're just going to stitch top and bottom surfaces directly - will sort out the spar penetration later
                             iTriangles += stitchFoilFace(outStreamData, outStreamText, binaryOut, isRHS,
