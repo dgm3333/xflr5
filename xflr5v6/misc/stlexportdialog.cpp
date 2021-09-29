@@ -38,9 +38,9 @@ int STLExportDlg::s_NChordPanels = 13;
 int STLExportDlg::s_NSpanPanels = 17;
 
 // 3d printable items
-double STLExportDlg::s_dRibSpacing = 0.05f;
-double STLExportDlg::s_dRibThickness = 0.002f;
-double STLExportDlg::s_dSkinThickness = 0.0005f;
+double STLExportDlg::s_dRibSpacing = 50.0f;
+double STLExportDlg::s_dRibThickness = 2.0f;
+double STLExportDlg::s_dSkinThickness = 0.5f;
 
 STLExportDlg::STLExportDlg()
 {
@@ -91,7 +91,7 @@ void STLExportDlg::setupLayout()
         }
 
 
-        QGroupBox *pDimensionsBox = new QGroupBox(tr("3D printable dimensions"));
+        QGroupBox *pDimensionsBox = new QGroupBox(tr("3D printable dimensions (mm *NOT* metres for printer compatability)"));
         {
             QVBoxLayout *pDimensionsLayout = new QVBoxLayout;
             {

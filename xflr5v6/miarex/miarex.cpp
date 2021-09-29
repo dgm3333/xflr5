@@ -7851,7 +7851,7 @@ void Miarex::onExporttoSTL()
 
         if (STLExportDlg::s_i3dOutputStyle == 0)
         {
-            qDebug() << "!b3DPrint\n";
+            //qDebug() << "!b3DPrint";
             if(bBinary)
             {
                 if (!XFile.open(QIODevice::WriteOnly)) return;
@@ -7869,7 +7869,7 @@ void Miarex::onExporttoSTL()
             }
 
         } else {
-            qDebug() << "b3DPrint\n";
+            //qDebug() << "b3DPrint";
             // 3dPrintable does both binary and text output, but requires handles to both format types
             if(bBinary)
             {
@@ -7884,6 +7884,7 @@ void Miarex::onExporttoSTL()
 
                 // binary version of STL file requires the number of faces to be written directly after the 80 byte header
                 // we didn't know what it was when the file was originally written so seek back and overwrite it now
+                XFile.flush();
                 XFile.seek(80);
                 char buffer[4];
                 memcpy(buffer, &iTriangles, sizeof(uint32_t));
@@ -7891,9 +7892,10 @@ void Miarex::onExporttoSTL()
             }
             else
             {
-                m_pCurPlane->wing()->ribSpacing = STLExportDlg::s_dRibSpacing;
-                m_pCurPlane->wing()->ribThickness = STLExportDlg::s_dRibThickness;
-                m_pCurPlane->wing()->skinThickness = STLExportDlg::s_dSkinThickness;
+                // Although the dlgbox asks for mm, xflr5 uses SI units, so switch them here
+                m_pCurPlane->wing()->ribSpacing = STLExportDlg::s_dRibSpacing/1000;
+                m_pCurPlane->wing()->ribThickness = STLExportDlg::s_dRibThickness/1000;
+                m_pCurPlane->wing()->skinThickness = STLExportDlg::s_dSkinThickness/1000;
 
                 if (!XFile.open(QIODevice::WriteOnly | QIODevice::Text)) return ;
                 QTextStream out(&XFile);

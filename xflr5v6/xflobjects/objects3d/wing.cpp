@@ -2839,45 +2839,58 @@ void Wing::exportSTLTriangle3dPrintable(QDataStream &outStreamData, QTextStream 
         N.reverse();
 
     if (binaryOut) {
-        short zero = 0;
-        char buffer[12];
-
+        //*  foreach triangle
+        //*     REAL32[3] – Normal vector
+        //*     REAL32[3] – Vertex 1
+        //*     REAL32[3] – Vertex 2
+        //*     REAL32[3] – Vertex 3
+        //*     UINT16 – Attribute byte count
+        //*  end
         xfl::writeFloat(outStreamData, N.xf());
         xfl::writeFloat(outStreamData, N.yf());
         xfl::writeFloat(outStreamData, N.zf());
-        xfl::writeFloat(outStreamData, Pt0.xf()*unit);
-        xfl::writeFloat(outStreamData, Pt0.yf()*unit);
-        xfl::writeFloat(outStreamData, Pt0.zf()*unit);
+        xfl::writeFloat(outStreamData, (Pt0.xf()+offset.xf())*unit);
+        xfl::writeFloat(outStreamData, (Pt0.yf()+offset.yf())*unit);
+        xfl::writeFloat(outStreamData, (Pt0.zf()+offset.zf())*unit);
         if (! reverse) {
-            xfl::writeFloat(outStreamData, Pt1.xf()*unit);
-            xfl::writeFloat(outStreamData, Pt1.yf()*unit);
-            xfl::writeFloat(outStreamData, Pt1.zf()*unit);
-            xfl::writeFloat(outStreamData, Pt2.xf()*unit);
-            xfl::writeFloat(outStreamData, Pt2.yf()*unit);
-            xfl::writeFloat(outStreamData, Pt2.zf()*unit);
+            xfl::writeFloat(outStreamData, (Pt1.xf()+offset.xf())*unit);
+            xfl::writeFloat(outStreamData, (Pt1.yf()+offset.yf())*unit);
+            xfl::writeFloat(outStreamData, (Pt1.zf()+offset.zf())*unit);
+            xfl::writeFloat(outStreamData, (Pt2.xf()+offset.xf())*unit);
+            xfl::writeFloat(outStreamData, (Pt2.yf()+offset.yf())*unit);
+            xfl::writeFloat(outStreamData, (Pt2.zf()+offset.zf())*unit);
         } else {
-            xfl::writeFloat(outStreamData, Pt2.xf()*unit);
-            xfl::writeFloat(outStreamData, Pt2.yf()*unit);
-            xfl::writeFloat(outStreamData, Pt2.zf()*unit);
-            xfl::writeFloat(outStreamData, Pt1.xf()*unit);
-            xfl::writeFloat(outStreamData, Pt1.yf()*unit);
-            xfl::writeFloat(outStreamData, Pt1.zf()*unit);
+            xfl::writeFloat(outStreamData, (Pt2.xf()+offset.xf())*unit);
+            xfl::writeFloat(outStreamData, (Pt2.yf()+offset.yf())*unit);
+            xfl::writeFloat(outStreamData, (Pt2.zf()+offset.zf())*unit);
+            xfl::writeFloat(outStreamData, (Pt1.xf()+offset.xf())*unit);
+            xfl::writeFloat(outStreamData, (Pt1.yf()+offset.yf())*unit);
+            xfl::writeFloat(outStreamData, (Pt1.zf()+offset.zf())*unit);
         }
+        short zero = 0;
+        char buffer[12];
         memcpy(buffer, &zero, sizeof(short));
         outStreamData.writeRawData(buffer, 2);
 
     } else {
+        //*  facet normal ni nj nk
+        //*     outer loop
+        //*       vertex v1x v1y v1z
+        //*       vertex v2x v2y v2z
+        //*       vertex v3x v3y v3z
+        //*     endloop
+        //*  endfacet
         //qDebug() << "offy: " << offset.y << "," << Pt0.y << "," << Pt1.y << "," << Pt2.y;
         //stream the triangle
         outStreamText << QString::asprintf("  facet normal %13.7f  %13.7f  %13.7f\n",  N.x, N.y, N.z);
         outStreamText << "    outer loop\n";
-        outStreamText << QString::asprintf("      vertex %13.7f  %13.7f  %13.7f\n",  Pt0.x+offset.x, Pt0.y+offset.y, Pt0.z+offset.z);
+        outStreamText << QString::asprintf("      vertex %13.7f  %13.7f  %13.7f\n",  (Pt0.x+offset.x)*unit, (Pt0.y+offset.y)*unit, (Pt0.z+offset.z)*unit);
         if (! reverse) {
-            outStreamText << QString::asprintf("      vertex %13.7f  %13.7f  %13.7f\n",  Pt1.x+offset.x, Pt1.y+offset.y, Pt1.z+offset.z);
-            outStreamText << QString::asprintf("      vertex %13.7f  %13.7f  %13.7f\n",  Pt2.x+offset.x, Pt2.y+offset.y, Pt2.z+offset.z);
+            outStreamText << QString::asprintf("      vertex %13.7f  %13.7f  %13.7f\n",  (Pt1.x+offset.x)*unit, (Pt1.y+offset.y)*unit,( Pt1.z+offset.z)*unit);
+            outStreamText << QString::asprintf("      vertex %13.7f  %13.7f  %13.7f\n",  (Pt2.x+offset.x)*unit, (Pt2.y+offset.y)*unit, (Pt2.z+offset.z)*unit);
         } else {
-            outStreamText << QString::asprintf("      vertex %13.7f  %13.7f  %13.7f\n",  Pt2.x+offset.x, Pt2.y+offset.y, Pt2.z+offset.z);
-            outStreamText << QString::asprintf("      vertex %13.7f  %13.7f  %13.7f\n",  Pt1.x+offset.x, Pt1.y+offset.y, Pt1.z+offset.z);
+            outStreamText << QString::asprintf("      vertex %13.7f  %13.7f  %13.7f\n",  (Pt2.x+offset.x)*unit, (Pt2.y+offset.y)*unit, (Pt2.z+offset.z)*unit);
+            outStreamText << QString::asprintf("      vertex %13.7f  %13.7f  %13.7f\n",  (Pt1.x+offset.x)*unit, (Pt1.y+offset.y)*unit, (Pt1.z+offset.z)*unit);
         }
         outStreamText << "    endloop\n  endfacet\n";
     }
@@ -3120,9 +3133,9 @@ void Wing::generateSecondSkinFoilPoints(QVector<Vector3d> &PtPrimaryTop, QVector
                                         int outputStyle)
 {
 
-    qDebug() << "generateSecondSkinFoilPoints\n";
+    //qDebug() << "generateSecondSkinFoilPoints";
 
-    qDebug() << NormalPrimaryTop.size() << "\n";
+    //qDebug() << NormalPrimaryTop.size();
     for(int ic=0; ic<NormalPrimaryTop.size(); ic++)
     {
         // Get the initial point locations for the secondary surface
@@ -3228,17 +3241,17 @@ uint32_t Wing::stitchWingSurface(QDataStream &outStreamData, QTextStream &outStr
                          QVector<Vector3d> &PtRight, QVector<Vector3d> &NormalB,
                          double tau, double tauA, double tauB, Vector3d &offset, float& unit, bool reverse)
 {
-    qDebug() << "stitchWingSurface - start";
+    //qDebug() << "stitchWingSurface - start";
     uint32_t iTriangles = 0;
     Vector3d Pt0, Pt1, Pt2;
 
-    qDebug() << "TAU: " << tau << "," << tauA << "," << tauB;
+    //qDebug() << "TAU: " << tau << "," << tauA << "," << tauB;
 
 //    for (int i = 0; i<PtLeft.size(); i++)
 //        qDebug() << "ys: " << PtLeft[i].y << "," << PtRight[i].y;
 
     //Work back chordwise (from LE to TE) and split each rectangular panel into two triangles
-    for(int ic=0; ic<PtLeft.size()-2; ic++)
+    for(int ic=0; ic<PtLeft.size()-1; ic++)
     {
         Vector3d N = (NormalA[ic]+NormalA[ic+1]) * (1.0-tau) + (NormalB[ic]+NormalB[ic+1]) * tau;
         N.normalize();
@@ -3259,7 +3272,7 @@ uint32_t Wing::stitchWingSurface(QDataStream &outStreamData, QTextStream &outStr
         iTriangles +=2;
     }
 
-    qDebug() << "stitchWingSurface - end";
+    //qDebug() << "stitchWingSurface - end";
     return iTriangles;
 }
 
@@ -3288,7 +3301,7 @@ uint32_t Wing::stitchFoilFace(QDataStream &outStreamData, QTextStream &outStream
 
     Vector3d N, Pt0, Pt1, Pt2;
 
-    qDebug() << "stitchFoilFace";
+    //qDebug() << "stitchFoilFace";
     //for RIBS and TIP PATCHES
 
     int iTriangles = 0;
@@ -3334,8 +3347,7 @@ uint32_t Wing::stitchFoilFace(QDataStream &outStreamData, QTextStream &outStream
 
     iTriangles +=1;
 
-    qDebug() << "iTriangles: " << iTriangles << "\n";
-    outStreamText << "end stitchTopToBottomRight\n";
+    //qDebug() << "iTriangles: " << iTriangles << "\n";
     return iTriangles;
 
 }
@@ -3377,48 +3389,93 @@ uint32_t Wing::stitchFoilFaceSpars(QDataStream &outStreamData, QTextStream &outS
         N = { 0, -1, 0};
 
 
+    // Interpolate foil points for the current tau
+    QVector<Vector3d> PtFoilTop, PtFoilBot;
+    for (int ic=0; ic< PtTopLeft.size(); ic++) {
+        PtFoilTop.push_back(PtTopLeft[ic] * (1.0-tau) + PtTopRight[ic] * tau);
+        PtFoilBot.push_back(PtBotLeft[ic] * (1.0-tau) + PtBotRight[ic] * tau);
+    }
+
     QVector<QVector<Vector3d>> sparMargins;    // list of points on the spar boundaries
 
     // generate all the spar points and add them to the sparmargins vector
     for (auto& s : spars)
         sparMargins.push_back( generateSparPoints(s, y));
 
-    /*
-    struct bb {
+
+    struct sparBBStruct {
         double x0 = DBL_MAX;
         double x1 = DBL_MIN;
         double z0 = DBL_MAX;
         double z1 = DBL_MIN;
 
-        uint16_t locX0;
-        uint16_t locX1;
-        uint16_t locZ0;
-        uint16_t locZ1;
+        // rim locations
+        uint16_t rimX0;
+        uint16_t rimX1;
+        uint16_t rimZ0;
+        uint16_t rimZ1;
+
+        // foil locations
+        uint16_t foilXt0;
+        uint16_t foilXt1;
+        uint16_t foilXb0;
+        uint16_t foilXb1;
+        uint16_t foilZ0;
+        uint16_t foilZ1;
+
     };
-    bb sparBBs[sparMargins.size()];
+    QVector<sparBBStruct> sparBBs(sparMargins.size());
 
     // create the bounding boxes for the spar points
     for (int sm = 0; sm < sparMargins.size(); sm++) {
         for (auto& sp : sparMargins[sm]) {
             if (sparBBs[sm].x0 > sp.x) {
                 sparBBs[sm].x0 = sp.x;
-                sparBBs[sm].locX0 = sm;
+                sparBBs[sm].rimX0 = sm;
             }
             if (sparBBs[sm].x1 < sp.x) {
                 sparBBs[sm].x1 = sp.x;
-                sparBBs[sm].locX1 = sm;
+                sparBBs[sm].rimX1 = sm;
             }
             if (sparBBs[sm].z0 > sp.z) {
                 sparBBs[sm].z0 = sp.z;
-                sparBBs[sm].locZ0 = sm;
+                sparBBs[sm].rimZ0 = sm;
             }
             if (sparBBs[sm].z1 < sp.z) {
                 sparBBs[sm].z1 = sp.z;
-                sparBBs[sm].locZ1 = sm;
+                sparBBs[sm].rimZ1 = sm;
             }
         }
     }
-*/
+
+    // identify which foil points align to which spar points
+    for (auto& bb : sparBBs) {
+        for (int i = 1; i< PtFoilTop.size(); i++) {
+            if (bb.rimX0 < PtFoilTop[i-1].x) {
+                bb.foilXt0 = i;
+                break;
+            }
+        }
+        for (int i = bb.foilXt0; i< PtFoilTop.size(); i++) {
+            if (bb.rimX1 < PtFoilTop[i].x) {
+                bb.foilXt1 = i;
+                break;
+            }
+        }
+        for (int i = 1; i< PtFoilBot.size(); i++) {
+            if (bb.rimX0 < PtFoilBot[i-1].x) {
+                bb.foilXb0 = i;
+                break;
+            }
+        }
+        for (int i = bb.foilXb0; i< PtFoilBot.size(); i++) {
+            if (bb.rimX1 < PtFoilBot[i].x) {
+                bb.foilXb1 = i;
+                break;
+            }
+        }
+    }
+
     //L.E. triangle
     Pt0 = PtBotLeft[0]   * (1.0-tau) + PtBotRight[0]   * tau;
     Pt1 = PtTopLeft[1] * (1.0-tau) + PtTopRight[1] * tau;
@@ -3453,8 +3510,7 @@ uint32_t Wing::stitchFoilFaceSpars(QDataStream &outStreamData, QTextStream &outS
 
     iTriangles +=1;
 
-    qDebug() << "iTriangles: " << iTriangles << "\n";
-    outStreamText << "end stitchTopToBottomRight\n";
+    //qDebug() << "iTriangles: " << iTriangles << "\n";
     return iTriangles;
 
 }
@@ -3584,7 +3640,7 @@ uint32_t Wing::stitchFoilFaceComplex(QDataStream &outStreamData, QTextStream &ou
     QVector<Vector3d> foilMargin;   // list of points on the outer foil margin
     QVector<QVector<Vector3d>> sparMargins;    // list of points on the spar boundaries
 
-    qDebug() << "stitchFoilFaceComplex";
+    //qDebug() << "stitchFoilFaceComplex";
 
     int iTriangles = 0;
 
@@ -3686,8 +3742,8 @@ uint32_t Wing::stitchFoilFaceComplex(QDataStream &outStreamData, QTextStream &ou
 */
 
 
-    qDebug() << "iTriangles: " << iTriangles;
-    qDebug() << "end stitchFoilFaceComplex";
+    //qDebug() << "iTriangles: " << iTriangles;
+    //qDebug() << "end stitchFoilFaceComplex";
     return iTriangles;
 
 }
@@ -3717,8 +3773,7 @@ uint32_t Wing::stitchSkinEdge(QDataStream &outStreamData, QTextStream &outStream
 
     Vector3d N, Pt0, Pt1, Pt2;
 
-    qDebug() << "stitchFoilFace\n";
-    outStreamText << "stitchFoilFace\n";
+    //qDebug() << "stitchFoilFace\n";
     //for RIBS and TIP PATCHES
 
     int iTriangles = 0;
@@ -3760,8 +3815,7 @@ uint32_t Wing::stitchSkinEdge(QDataStream &outStreamData, QTextStream &outStream
         iTriangles +=2;
     }
 
-    qDebug() << "iTriangles: " << iTriangles << "\n";
-    outStreamText << "end stitchTopToBottomRight\n";
+    //qDebug() << "iTriangles: " << iTriangles << "\n";
     return iTriangles;
 
 }
@@ -3817,7 +3871,7 @@ uint32_t Wing::stitchSpar(QDataStream &outStreamData, QTextStream &outStreamText
 
 
 
-    qDebug() << "stitchSpar";
+//    qDebug() << "stitchSpar";
 //    qDebug() << "pLeft { " << pLeft.x << "," << pLeft.y << ","  << pLeft.z << " }" ;
 //    qDebug() << "pRight { " << pRight.x << "," << pRight.y << ","  << pRight.z << " }" ;
 
@@ -3851,7 +3905,7 @@ uint32_t Wing::stitchSpar(QDataStream &outStreamData, QTextStream &outStreamText
     Vector3d NB = { 0, -1, 0};
 
 
-    qDebug() << "offset: " << offset.x << "," << offset.y << "," << offset.z;
+    //qDebug() << "offset: " << offset.x << "," << offset.y << "," << offset.z;
     // fill vectors with the points around the sparRim
     QVector<Vector3d> lSR = generateSparPoints(spar, yLeft);
     QVector<Vector3d> rSR = generateSparPoints(spar, yRight);
@@ -3932,6 +3986,9 @@ uint32_t Wing::exportSTL3dPrintable(QDataStream &outStreamData, QTextStream &out
                                 int CHORDPANELS, int SPANPANELS,
                                 int outputStyle, float unit)
 {
+
+    // 3d printers expect measurements in mm, no the normal xflr5 SI units, so multiply ouput by 1000
+    unit = 1000;
 
 
     if (binaryOut) {
@@ -4029,13 +4086,11 @@ uint32_t Wing::exportSTL3dPrintable(QDataStream &outStreamData, QTextStream &out
     skinThicknessBot.fill(skinThickness);   // since we don't know how to set the skin thickness just make it constant
 
 
-    // load this face a bit early to provide a locator for the spar
+    // load this surface a bit early to provide a locator for the spar
     m_Surface[1].getSidePoints(xfl::TOPSURFACE, nullptr, PtPrimaryTopLeft, PtPrimaryTopRight, NormalPrimaryTopA, NormalPrimaryTopB, CHORDPANELS+1);
 
-//    for (int i = 0; i< PtPrimaryTopLeft.size(); i++)
-//        qDebug() << PtPrimaryTopLeft[i].y << "," << PtPrimaryTopRight[i].y;
-
     // create a test spar. NB Spars will not be correctly modeled if they penetrate the wing surface
+    spars.clear();
     spars.push_back({});
 
     spars[0].pL = PtPrimaryTopLeft[0];
@@ -4062,7 +4117,7 @@ uint32_t Wing::exportSTL3dPrintable(QDataStream &outStreamData, QTextStream &out
     Angular data is stored in degrees.
     */
 
-    qDebug() << "m_Surface.size (=number of wing sides): " << m_Surface.size() << "\n";
+    qDebug() << "m_Surface.size (=number of wing sides): " << m_Surface.size();
     // m_Surface[0] = the left wing
     // m_Surface[1] = the right wing
 
@@ -4076,16 +4131,8 @@ uint32_t Wing::exportSTL3dPrintable(QDataStream &outStreamData, QTextStream &out
     // this should be possible but use of offset and tracking of the distance from the root
 
 
-
-
-
-
-
     for (int j=1; j<m_Surface.size(); j++)  //
     {
-        //outStreamText << "Starting Surface " << j << "\n";
-
-
 
         Surface const &surf = m_Surface.at(j);
 
@@ -4183,7 +4230,7 @@ uint32_t Wing::exportSTL3dPrintable(QDataStream &outStreamData, QTextStream &out
             double minX = PtPrimaryTopLeft[0].x * (1.0-tauRR) + PtPrimaryTopRight[0].x * tauRR;
 
             // each part/division should be placed flat on the printer bed
-            qDebug() << "offset y: " << sectionRootDistanceFromWingRoot << "," << distanceFromSectionLeft;
+            //qDebug() << "offset y: " << sectionRootDistanceFromWingRoot << "," << distanceFromSectionLeft;
             offset = { -minX, -sectionRootDistanceFromWingRoot-distanceFromSectionLeft, zDivisionOffset };
 
 
@@ -4210,7 +4257,7 @@ uint32_t Wing::exportSTL3dPrintable(QDataStream &outStreamData, QTextStream &out
                 if (tauA > 1.0)
                     break;
                 double tauC = (double)(distanceFromSectionLeft+ribThickness) / (double)(surf.m_Length);
-                qDebug() << "tauC: " << tauC << "," << distanceFromSectionLeft << "," << ribThickness << "," << surf.m_Length;
+                //qDebug() << "tauC: " << tauC << "," << distanceFromSectionLeft << "," << ribThickness << "," << surf.m_Length;
                 if (tauC > 1.0)
                     tauC = 1.0f;     // for the last division it can't be further than the full length of the span
                 double tau = (tauA+tauC)/2.0;
@@ -4224,10 +4271,8 @@ uint32_t Wing::exportSTL3dPrintable(QDataStream &outStreamData, QTextStream &out
                          PtPrimaryBotLeft, NormalPrimaryBotA, PtPrimaryBotRight, NormalPrimaryBotB,
                          tau, tauA, tauC, offset, unit, true);
 
-                qDebug() << "1";
                 // now fill in the faces
                 if (isRHS) {
-                    qDebug() << "2";
                     // tau is the proportional distance along the current span
                     // uses the same A/B logic as Normals (ie A is the left face, B is the right face
                     double tauRibRoot = dfslAtRibRoot / surf.m_Length;
@@ -4235,16 +4280,13 @@ uint32_t Wing::exportSTL3dPrintable(QDataStream &outStreamData, QTextStream &out
 
                     if (outputStyle == PRINTABLE)
                     {
-                        qDebug() << "3";
                         // Generate spar cutouts if they penetrate this rib?
                         int sparPenetrations = 0;
                         for (auto& spar : spars) {
-                            qDebug() << "4";
-                            qDebug() << spar.pL.y << "," << dfslAtRibRoot << "," << ribThickness << "&" << spar.pR.y << "," << dfslAtRibRoot;
+                            //qDebug() << spar.pL.y << "," << dfslAtRibRoot << "," << ribThickness << "&" << spar.pR.y << "," << dfslAtRibRoot;
                             // if the spar contacts the rib it will be treated as full penetration
                             if ((spar.pL.y <= dfslAtRibRoot + ribThickness) & (spar.pR.y >= dfslAtRibRoot)) {
                                 sparPenetrations++;
-                                qDebug() << "5";
                                 // TODO: eliminate any spars which are not encompassed by the foil boundary
                                 iTriangles += stitchSpar(outStreamData, outStreamText, binaryOut,
                                           spar,
