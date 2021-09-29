@@ -78,6 +78,7 @@ class STLExportDlg : public QDialog
         QLabel *m_plabRibSpacing, *m_plabRibThickness, *m_plabSkinThickness;
         DoubleEdit *m_pdeRibSpacing, *m_pdeRibThickness, *m_pdeSkinThickness;
 
+        class snbTable;
 
 };
 

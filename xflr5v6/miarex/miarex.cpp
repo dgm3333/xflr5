@@ -7871,6 +7871,12 @@ void Miarex::onExporttoSTL()
         } else {
             //qDebug() << "b3DPrint";
             // 3dPrintable does both binary and text output, but requires handles to both format types
+            // Although the dlgbox asks for mm, xflr5 uses SI units, so switch them here
+            m_pCurPlane->wing()->ribSpacing = STLExportDlg::s_dRibSpacing/1000;
+            m_pCurPlane->wing()->ribThickness = STLExportDlg::s_dRibThickness/1000;
+            m_pCurPlane->wing()->skinThickness = STLExportDlg::s_dSkinThickness/1000;
+
+
             if(bBinary)
             {
                 if (!XFile.open(QIODevice::WriteOnly)) return;
@@ -7880,11 +7886,13 @@ void Miarex::onExporttoSTL()
 
                 uint32_t iTriangles = pWing(STLExportDlg::s_iObject-1)->exportSTL3dPrintable(out, outDummy, bBinary,
                       STLExportDlg::s_NChordPanels, STLExportDlg::s_NSpanPanels,
-                      STLExportDlg::s_i3dOutputStyle, float(Units::mtoUnit()));
+                      (Wing::printOutputStyle)STLExportDlg::s_i3dOutputStyle, float(Units::mtoUnit()));
 
                 // binary version of STL file requires the number of faces to be written directly after the 80 byte header
                 // we didn't know what it was when the file was originally written so seek back and overwrite it now
                 XFile.flush();
+                XFile.close();
+                XFile.open(QIODevice::Append);
                 XFile.seek(80);
                 char buffer[4];
                 memcpy(buffer, &iTriangles, sizeof(uint32_t));
@@ -7892,17 +7900,12 @@ void Miarex::onExporttoSTL()
             }
             else
             {
-                // Although the dlgbox asks for mm, xflr5 uses SI units, so switch them here
-                m_pCurPlane->wing()->ribSpacing = STLExportDlg::s_dRibSpacing/1000;
-                m_pCurPlane->wing()->ribThickness = STLExportDlg::s_dRibThickness/1000;
-                m_pCurPlane->wing()->skinThickness = STLExportDlg::s_dSkinThickness/1000;
-
                 if (!XFile.open(QIODevice::WriteOnly | QIODevice::Text)) return ;
                 QTextStream out(&XFile);
                 QDataStream outDummy;
                 pWing(STLExportDlg::s_iObject-1)->exportSTL3dPrintable(outDummy, out, bBinary,
                       STLExportDlg::s_NChordPanels, STLExportDlg::s_NSpanPanels,
-                      STLExportDlg::s_i3dOutputStyle, float(Units::mtoUnit()));
+                      (Wing::printOutputStyle)STLExportDlg::s_i3dOutputStyle, float(Units::mtoUnit()));
 
             }
         }

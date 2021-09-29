@@ -9,7 +9,25 @@ It would be very safe to assume the original Sourceforge version will be more up
 The original binaries and sourcecode can be accessed from https://sourceforge.net/projects/xflr5/
 
 
-NB This is a work in progress - it is currently at the status of "barely functional"
+NB This is a work in progress - it is currently at the status of "barely functional", so don't expect anything too amazing if you try it out.
+
+Known issues:
+[See also TODOs within wing.cpp]
+It currently only processing a simple "single section" wing profile, and only the RHS - so you will have to mirror and print to get the Left wing.
+Binary STL output doesn't work for printed parts (but does work for 3d viewable items) - don't know why, but as text output works fine it's a fairly low priority)
+Some of the settings are hardcoded - so you can only access them if you compile your own code.
+Spars:
+   Will currently (probably) fail to form manifold surfaces if one is above another
+   Spar settings are hardcoded as I haven't moved it into the dialog box yet. 
+   If a spar outer surface is routed within 0.5radius of a skin surface (either outer or inner) then that part will probably be non-manifold
+If an option seems robust and worthwhile keeping I'll move it into the dialog box and/or enable it to make it accessible.
+None of the settings are saved - since I have no intention of touching the xflr5 savefiles this isn't likely to change.
+Although it's basically just inverting the skin (so fairly basic extension), it isn't creating molds as yet - I wanted to get the "pure" 3d printable wing working to a decent level first.
+
+
+TODO:
+[See also TODOs within wing.cpp]
+adjust the rib thickness depending on the force that each panel experiences
 
 
 
@@ -22,6 +40,8 @@ The stl output can be opened in your favorite printing or editing software (Prus
   <img src="https://github.com/dgm3333/xflr5/blob/main/doc/STLExport.png" title="Export to STL" />
   <img src="https://github.com/dgm3333/xflr5/blob/main/doc/STLdlg.png" title="Dialog Box" />
   <img src="https://github.com/dgm3333/xflr5/blob/main/doc/STLoutput.png" title="STL Output" />
+  <img src="https://github.com/dgm3333/xflr5/blob/main/doc/STLoutput2.png" title="STL Output" />
+    <img src="https://github.com/dgm3333/xflr5/blob/main/doc/STLoutput3.png" title="STL Output" />
 </p>
 
 

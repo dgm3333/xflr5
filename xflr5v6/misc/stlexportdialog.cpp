@@ -25,6 +25,8 @@
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QPushButton>
+#include <QAbstractTableModel>
+#include <QString>
 
 #include "stlexportdialog.h"
 #include <xflwidgets/customwts/intedit.h>
@@ -41,6 +43,13 @@ int STLExportDlg::s_NSpanPanels = 17;
 double STLExportDlg::s_dRibSpacing = 50.0f;
 double STLExportDlg::s_dRibThickness = 2.0f;
 double STLExportDlg::s_dSkinThickness = 0.5f;
+
+
+const int COLS= 3;
+const int ROWS= 2;
+
+
+
 
 STLExportDlg::STLExportDlg()
 {
@@ -130,6 +139,12 @@ void STLExportDlg::setupLayout()
             pDimensionsBox->setLayout(pDimensionsLayout);
         }
 
+        QGroupBox *pSparsBox = new QGroupBox(tr("Spars and Braces"));
+        {
+           //snbTable *pSparsNBraces = new snbTable;
+
+        }
+
 
         QGroupBox *pObjectBox = new QGroupBox(tr("Object to export"));
         {
@@ -188,6 +203,7 @@ void STLExportDlg::setupLayout()
         pMainLayout->addWidget(pExportFormat);
         pMainLayout->addWidget(pExportFormatPrintable);
         pMainLayout->addWidget(pDimensionsBox);
+        pMainLayout->addWidget(pSparsBox);
         pMainLayout->addWidget(pObjectBox);
         pMainLayout->addWidget(pResolutionBox);
         pMainLayout->addStretch();
@@ -337,3 +353,38 @@ bool STLExportDlg::saveSettings(QSettings &settings)
     settings.endGroup();
     return true;
 }
+
+
+class STLExportDlg::snbTable : public QAbstractTableModel
+{
+
+
+    public:
+        snbTable(QObject *parent = nullptr);
+        int rowCount(const QModelIndex &parent = QModelIndex()) const override;
+        int columnCount(const QModelIndex &parent = QModelIndex()) const override;
+        QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
+        //bool setData(const QModelIndex &index, const QVariant &value, int role = Qt::EditRole) override;
+        Qt::ItemFlags flags(const QModelIndex &index) const override;
+        bool setData(const QModelIndex &index, const QVariant &value, int role = Qt::EditRole) override
+        {
+            if (role == Qt::EditRole) {
+                if (!checkIndex(index))
+                    return false;
+                //save value from editor to member m_gridData
+                m_gridData[index.row()][index.column()] = value.toString();
+                //for presentation purposes only: build and emit a joined string
+                QString result;
+                for (int row = 0; row < ROWS; row++) {
+                    for (int col= 0; col < COLS; col++)
+                        result += m_gridData[row][col] + ' ';
+                }
+                emit editCompleted(result);
+                return true;
+            }
+            return false;
+        }    private:
+        QString m_gridData[ROWS][COLS];  //holds text entered into QTableView
+    signals:
+        void editCompleted(const QString &);
+};

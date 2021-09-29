@@ -266,11 +266,13 @@ class Wing
                                           bool reverse=false);
 
 
+        typedef enum {STDMESH, PRINTABLE, RIBSONLY, MOLD} printOutputStyle;
+        typedef enum {SPARCUTOUT, SPARPRINTED} sparType;
         struct sparStruct {
             Vector3d pL;            // p0 be to the left of p1.
             Vector3d pR;
             double radius;
-            int type = SPARCUTOUT;   // BRACECUTOUT, BRACEPRINTED
+            sparType type = SPARCUTOUT;   // BRACECUTOUT, BRACEPRINTED
             int shape = 0;   // 0 = cylindrical (currently only cylindrical braces are supported)
             int vertexCount = 25;    // setting to 3 = triangular brace, 4 = square brace, lots = a cylinder
         };
@@ -297,6 +299,10 @@ class Wing
                                  QVector<Vector3d> &PtTopLeft, QVector<Vector3d> &PtBotLeft,
                                  QVector<Vector3d> &PtTopRight, QVector<Vector3d> &PtBotRight,
                                  QVector<sparStruct> spars, double y, double tau, Vector3d &offset, float& unit);
+        uint32_t stitchFoilFaceSpars2(QDataStream &outStreamData, QTextStream &outStreamText, bool &binaryOut, bool bRightCap,
+                                 QVector<Vector3d> &PtTopLeft, QVector<Vector3d> &PtBotLeft,
+                                 QVector<Vector3d> &PtTopRight, QVector<Vector3d> &PtBotRight,
+                                 QVector<sparStruct> spars, double y, double tau, Vector3d &offset, float& unit);
         uint32_t stitchFoilFaceComplex(QDataStream &outStreamData, QTextStream &outStreamText, bool &binaryOut, bool bRightCap,
                                  QVector<Vector3d> &PtTopLeft, QVector<Vector3d> &PtBotLeft,
                                  QVector<Vector3d> &PtTopRight, QVector<Vector3d> &PtBotRight,
@@ -313,7 +319,7 @@ class Wing
 
         uint32_t exportSTL3dPrintable(QDataStream &outStreamData, QTextStream &outStreamText, bool binaryOut,
                                   int CHORDPANELS, int SPANPANELS,
-                                  int outputStyle, float unit);
+                                  printOutputStyle outputStyle, float unit);
 
 
         Foil* foil(const QString &strFoilName);
@@ -408,9 +414,6 @@ class Wing
         static constexpr double mm = 0.001;
         static constexpr double M_PID = 3.14159265358979323846;
         static constexpr double M_2PI = M_PID * 2.0;
-
-        typedef enum {STDMESH, PRINTABLE, RIBSONLY, MOLD} printType;
-        typedef enum {SPARCUTOUT, SPARPRINTED} sparType;
 
 
     public:
