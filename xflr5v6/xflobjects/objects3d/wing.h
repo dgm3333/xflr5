@@ -268,6 +268,8 @@ class Wing
 
         typedef enum {STDMESH, PRINTABLE, RIBSONLY, MOLD} printOutputStyle;
         typedef enum {SPARCUTOUT, SPARPRINTED} sparType;
+        typedef enum {OUTERFACE = 0, INNERFACE = 1} faceType;
+
         struct sparStruct {
             Vector3d pL;            // p0 be to the left of p1.
             Vector3d pR;
@@ -276,7 +278,15 @@ class Wing
             int shape = 0;   // 0 = cylindrical (currently only cylindrical braces are supported)
             int vertexCount = 25;    // setting to 3 = triangular brace, 4 = square brace, lots = a cylinder
         };
-
+        struct rdhStruct {  // resin Drainage Hole data
+            double rdhLoc;
+            Vector3d start[2];  // 0 = outer, 1=inner skin
+            Vector3d end[2];
+            Vector3d tip[2];
+            int startIc[2]={-1,-1};
+            int endIc[2]= {-1,-1};
+            int tipIc[2]= {-1,-1};
+        };
         Vector3d foilXZIntersection(Vector3d A, Vector3d B, Vector3d C, Vector3d D);
         void generateSecondSkinFoilPoints(QVector<Vector3d> &PtPrimaryTop, QVector<Vector3d> &NormalPrimaryTop,
                                           QVector<Vector3d> &PtPrimaryBot, QVector<Vector3d> &NormalPrimaryBot,
@@ -285,21 +295,25 @@ class Wing
                                           QVector<double> &skinThicknessTop, QVector<double>  &skinThicknessBot,
                                           int outputStyle);
         QVector<Vector3d> generateSparPoints(sparStruct spar, double y);
-
+        void generateDrainageHoles(QVector<Vector3d> &PtLeftOuter, QVector<Vector3d> &PtRightOuter,
+                                                      QVector<Vector3d> &PtLeftInner, QVector<Vector3d> &PtRightInner,
+                                                      QVector<rdhStruct> &resinDrainageHoles, double resinDrainageHoleWH,
+                                                      double tau);
 
         uint32_t stitchWingSurface(QDataStream &outStreamData, QTextStream &outStreamText, bool &binaryOut,
                                  QVector<Vector3d> &PtLeft, QVector<Vector3d> &NormalA,
                                  QVector<Vector3d> &PtRight, QVector<Vector3d> &NormalB,
+                                 double tau, double tauA, double tauB, Vector3d &offset, float& unit, bool reverse);
+        uint32_t stitchWingSurfaceDrained(QDataStream &outStreamData, QTextStream &outStreamText, bool &binaryOut,
+                                 QVector<Vector3d> &PtLeft, QVector<Vector3d> &NormalA,
+                                 QVector<Vector3d> &PtRight, QVector<Vector3d> &NormalB,
+                                 QVector<rdhStruct> &resinDrainageHoles, double resinDrainageHoleWH, faceType outer,
                                  double tau, double tauA, double tauB, Vector3d &offset, float& unit, bool reverse);
         uint32_t stitchFoilFace(QDataStream &outStreamData, QTextStream &outStreamText, bool &binaryOut, bool bRightCap,
                            QVector<Vector3d> &PtTopLeft, QVector<Vector3d> &PtBotLeft,
                            QVector<Vector3d> &PtTopRight, QVector<Vector3d> &PtBotRight,
                            double tau, Vector3d &offset, float& unit);
         uint32_t stitchFoilFaceSpars(QDataStream &outStreamData, QTextStream &outStreamText, bool &binaryOut, bool bRightCap,
-                                 QVector<Vector3d> &PtTopLeft, QVector<Vector3d> &PtBotLeft,
-                                 QVector<Vector3d> &PtTopRight, QVector<Vector3d> &PtBotRight,
-                                 QVector<sparStruct> spars, double y, double tau, Vector3d &offset, float& unit);
-        uint32_t stitchFoilFaceSpars2(QDataStream &outStreamData, QTextStream &outStreamText, bool &binaryOut, bool bRightCap,
                                  QVector<Vector3d> &PtTopLeft, QVector<Vector3d> &PtBotLeft,
                                  QVector<Vector3d> &PtTopRight, QVector<Vector3d> &PtBotRight,
                                  QVector<sparStruct> spars, double y, double tau, Vector3d &offset, float& unit);
@@ -316,7 +330,9 @@ class Wing
 
         uint32_t stitchSpar(QDataStream &outStreamData, QTextStream &outStreamText, bool &binaryOut,
                   sparStruct spars, double yLeft, double yRight, Vector3d &offset, float& unit);
-
+        uint32_t stitchDrainageHole(QDataStream &outStreamData, QTextStream &outStreamText, bool &binaryOut,
+                  QVector<rdhStruct> &resinDrainageHoles,
+                  Vector3d &offset, float& unit, bool reverse);
         uint32_t exportSTL3dPrintable(QDataStream &outStreamData, QTextStream &outStreamText, bool binaryOut,
                                   int CHORDPANELS, int SPANPANELS,
                                   printOutputStyle outputStyle, float unit);
