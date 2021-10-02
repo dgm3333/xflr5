@@ -263,7 +263,7 @@ class Wing
         // 3D Printing Functions
         void exportSTLTriangle3dPrintable(QDataStream &outStreamData, QTextStream &outStreamText, bool binaryOut,
                                           Vector3d Pt0, Vector3d Pt1, Vector3d Pt2, Vector3d N, Vector3d offset, float unit,
-                                          bool reverse=false);
+                                          bool reverse=false, double forceFlat = DBL_MAX);
 
 
         typedef enum {STDMESH, PRINTABLE, RIBSONLY, MOLD} printOutputStyle;
@@ -312,11 +312,11 @@ class Wing
         uint32_t stitchFoilFace(QDataStream &outStreamData, QTextStream &outStreamText, bool &binaryOut, bool bRightCap,
                            QVector<Vector3d> &PtTopLeft, QVector<Vector3d> &PtBotLeft,
                            QVector<Vector3d> &PtTopRight, QVector<Vector3d> &PtBotRight,
-                           double tau, Vector3d &offset, float& unit);
+                           double tau, Vector3d &offset, float& unit, double forceFlat = DBL_MAX);
         uint32_t stitchFoilFaceSpars(QDataStream &outStreamData, QTextStream &outStreamText, bool &binaryOut, bool bRightCap,
                                  QVector<Vector3d> &PtTopLeft, QVector<Vector3d> &PtBotLeft,
                                  QVector<Vector3d> &PtTopRight, QVector<Vector3d> &PtBotRight,
-                                 QVector<sparStruct> spars, double y, double tau, Vector3d &offset, float& unit);
+                                 QVector<sparStruct> spars, double y, double tau, Vector3d &offset, float& unit, double forceFlat = DBL_MAX);
         uint32_t stitchFoilFaceComplex(QDataStream &outStreamData, QTextStream &outStreamText, bool &binaryOut, bool bRightCap,
                                  QVector<Vector3d> &PtTopLeft, QVector<Vector3d> &PtBotLeft,
                                  QVector<Vector3d> &PtTopRight, QVector<Vector3d> &PtBotRight,
