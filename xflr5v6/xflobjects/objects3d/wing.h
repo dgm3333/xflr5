@@ -295,6 +295,7 @@ class Wing
                                           QVector<double> &skinThicknessTop, QVector<double>  &skinThicknessBot,
                                           int outputStyle);
         QVector<Vector3d> generateSparPoints(sparStruct spar, double y);
+        QVector<Vector3d> generateSparPointsTB(sparStruct spar, double y, bool top);
         void generateDrainageHoles(QVector<Vector3d> &PtLeftOuter, QVector<Vector3d> &PtRightOuter,
                                                       QVector<Vector3d> &PtLeftInner, QVector<Vector3d> &PtRightInner,
                                                       QVector<rdhStruct> &resinDrainageHoles, double resinDrainageHoleWH,
@@ -309,18 +310,16 @@ class Wing
                                  QVector<Vector3d> &PtRight, QVector<Vector3d> &NormalB,
                                  QVector<rdhStruct> &resinDrainageHoles, double resinDrainageHoleWH, faceType outer,
                                  double tau, double tauA, double tauB, Vector3d &offset, float& unit, bool reverse);
+
         uint32_t stitchFoilFace(QDataStream &outStreamData, QTextStream &outStreamText, bool &binaryOut, bool bRightCap,
                            QVector<Vector3d> &PtTopLeft, QVector<Vector3d> &PtBotLeft,
                            QVector<Vector3d> &PtTopRight, QVector<Vector3d> &PtBotRight,
                            double tau, Vector3d &offset, float& unit, double forceFlat = DBL_MAX);
-        uint32_t stitchFoilFaceSpars(QDataStream &outStreamData, QTextStream &outStreamText, bool &binaryOut, bool bRightCap,
-                                 QVector<Vector3d> &PtTopLeft, QVector<Vector3d> &PtBotLeft,
-                                 QVector<Vector3d> &PtTopRight, QVector<Vector3d> &PtBotRight,
-                                 QVector<sparStruct> spars, double y, double tau, Vector3d &offset, float& unit, double forceFlat = DBL_MAX);
         uint32_t stitchFoilFaceComplex(QDataStream &outStreamData, QTextStream &outStreamText, bool &binaryOut, bool bRightCap,
                                  QVector<Vector3d> &PtTopLeft, QVector<Vector3d> &PtBotLeft,
                                  QVector<Vector3d> &PtTopRight, QVector<Vector3d> &PtBotRight,
-                                 QVector<sparStruct> spars, double y, double tau, Vector3d &offset, float& unit);
+                                 QVector<sparStruct> spars, double y, double tau, Vector3d &offset, float& unit, double forceFlat = DBL_MAX);
+
         uint32_t stitchSkinEdge(QDataStream &outStreamData, QTextStream &outStreamText, bool &binaryOut, bool bRightCap, int outputStyle,
                                  QVector<Vector3d> &PtPrimaryTopLeft, QVector<Vector3d> &PtPrimaryBotLeft,
                                  QVector<Vector3d> &PtPrimaryTopRight, QVector<Vector3d> &PtPrimaryBotRight,
