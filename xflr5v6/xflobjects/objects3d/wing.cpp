@@ -2846,7 +2846,7 @@ void Wing::exportSTLTriangle3dPrintable(QDataStream &outStreamData, QTextStream 
 {
 
 
-    if (forceFlat != DBL_MAX) {
+    if (forceFlat != __DBL_MAX__) {
         Pt0.y = forceFlat - offset.y;
         Pt1.y = forceFlat - offset.y;
         Pt2.y = forceFlat - offset.y;
@@ -3150,8 +3150,8 @@ Vector3d Wing::foilXZIntersection(Vector3d A, Vector3d B, Vector3d C, Vector3d D
     if (determinant == 0)
     {
         // The lines are parallel. This is simplified
-        // by returning a Vector3d of FLT_MAX
-        return {FLT_MAX, FLT_MAX, FLT_MAX};
+        // by returning a Vector3d of __FLT_MAX__
+        return {__FLT_MAX__, __FLT_MAX__, __FLT_MAX__};
     }
     else
     {
@@ -3749,7 +3749,7 @@ QVector<Vector3d> generateSparPointsQuad(Wing::sparStruct spar, double y, int qu
     if ((spar.pL.y > y) || (spar.pR.y < y))
         return {};                      // The spar never intersects this y-plane
 
-    constexpr double M_PI = 3.14159265358979323846;
+//    constexpr double M_PI = 3.14159265358979323846;
     constexpr double M_PI12 = M_PI * 0.5;
 
     // find the centre of the spar at the point of interest
@@ -3817,7 +3817,7 @@ uint32_t Wing::stitchFoilFaceComplex(QDataStream &outStreamData, QTextStream &ou
 
     Vector3d N, Pt0, Pt1, Pt2;
 
-    qDebug() << "stitchFoilFaceSpars";
+    //qDebug() << "stitchFoilFaceSpars";
     //for RIBS and TIP PATCHES
 
     int iTriangles = 0;
@@ -3852,8 +3852,6 @@ uint32_t Wing::stitchFoilFaceComplex(QDataStream &outStreamData, QTextStream &ou
     // intermediate points (stitched in pairs)
     for(int ic=1; ic<PtTopLeft.size()-2; ic++)
     {
-
-
         if (PtFoilTop[ic+1].x < sparPtsTop[0].x) {
             // stitch foil top and bottom until spar is reached
             exportSTLTriangle3dPrintable(outStreamData, outStreamText, binaryOut, PtFoilBot[ic], PtFoilTop[ic], PtFoilTop[ic+1], N, offset, unit, bRightCap, forceFlat);
@@ -3865,7 +3863,8 @@ uint32_t Wing::stitchFoilFaceComplex(QDataStream &outStreamData, QTextStream &ou
             // add triangle to correctly stitch the LE of the spar
             exportSTLTriangle3dPrintable(outStreamData, outStreamText, binaryOut, PtFoilTop[ic], sparPtsTop[0], PtFoilBot[ic], N, offset, unit, bRightCap, forceFlat);
             iTriangles +=1;
-            while (PtFoilTop[ic+1].x > sparPtsTop[is].x && is < sparPtsTop.size()) {
+
+            while (PtFoilTop[ic+1].x > sparPtsTop[is].x && is < sparPtsTop.size()-1) {
                 exportSTLTriangle3dPrintable(outStreamData, outStreamText, binaryOut, PtFoilTop[ic], sparPtsTop[is+1], sparPtsTop[is], N, offset, unit, bRightCap, forceFlat);
                 exportSTLTriangle3dPrintable(outStreamData, outStreamText, binaryOut, PtFoilBot[ic], sparPtsBot[is], sparPtsBot[is+1], N, offset, unit, bRightCap, forceFlat);
                 iTriangles +=2;
@@ -3873,29 +3872,32 @@ uint32_t Wing::stitchFoilFaceComplex(QDataStream &outStreamData, QTextStream &ou
             }
         }
         else if (PtFoilTop[ic+1].x > sparPtsTop.back().x) {
-            // the next foil point is beyond the spar TE so stitch all remains points to that then finalise
+            //TODO: need to figure out consequences of needing this check (ie in what circumstances does it fail and does it matter)
+            if (is < sparPtsTop.size()) {
 
-            if (PtFoilTop[ic-1].x < sparPtsTop[0].x) {
-                // if there is only one foil point within the margin of the spar then an extra top and bot tri is needed
-                exportSTLTriangle3dPrintable(outStreamData, outStreamText, binaryOut, PtFoilTop[ic-1], PtFoilTop[ic], sparPtsTop[is], N, offset, unit, bRightCap, forceFlat);
-                exportSTLTriangle3dPrintable(outStreamData, outStreamText, binaryOut, PtFoilBot[ic-1], sparPtsBot[is], PtFoilBot[ic], N, offset, unit, bRightCap, forceFlat);
-                iTriangles +=2;
-            } else {
-                exportSTLTriangle3dPrintable(outStreamData, outStreamText, binaryOut, PtFoilTop[ic], sparPtsTop[is], sparPtsTop[is-1], N, offset, unit, bRightCap, forceFlat);
-                exportSTLTriangle3dPrintable(outStreamData, outStreamText, binaryOut, PtFoilBot[ic], sparPtsBot[is-1], sparPtsBot[is], N, offset, unit, bRightCap, forceFlat);
-                iTriangles +=2;
-            }
+                // the next foil point is beyond the spar TE so stitch all remains points to that then finalise
+                if (PtFoilTop[ic-1].x < sparPtsTop[0].x) {
+                    // if there is only one foil point within the margin of the spar then an extra top and bot tri is needed
+                    exportSTLTriangle3dPrintable(outStreamData, outStreamText, binaryOut, PtFoilTop[ic-1], PtFoilTop[ic], sparPtsTop[is], N, offset, unit, bRightCap, forceFlat);
+                    exportSTLTriangle3dPrintable(outStreamData, outStreamText, binaryOut, PtFoilBot[ic-1], sparPtsBot[is], PtFoilBot[ic], N, offset, unit, bRightCap, forceFlat);
+                    iTriangles +=2;
+                } else {
+                    exportSTLTriangle3dPrintable(outStreamData, outStreamText, binaryOut, PtFoilTop[ic], sparPtsTop[is], sparPtsTop[is-1], N, offset, unit, bRightCap, forceFlat);
+                    exportSTLTriangle3dPrintable(outStreamData, outStreamText, binaryOut, PtFoilBot[ic], sparPtsBot[is-1], sparPtsBot[is], N, offset, unit, bRightCap, forceFlat);
+                    iTriangles +=2;
+                }
 
-            // add tri linking last foil to next foil point
-            exportSTLTriangle3dPrintable(outStreamData, outStreamText, binaryOut, PtFoilTop[ic], PtFoilTop[ic+1], sparPtsTop[is], N, offset, unit, bRightCap, forceFlat);
-            exportSTLTriangle3dPrintable(outStreamData, outStreamText, binaryOut, PtFoilBot[ic], sparPtsBot[is], PtFoilBot[ic+1], N, offset, unit, bRightCap, forceFlat);
-            iTriangles +=2;
-
-            while (is < sparPtsTop.size()-1) {
-                exportSTLTriangle3dPrintable(outStreamData, outStreamText, binaryOut, PtFoilTop[ic+1], sparPtsTop[is+1], sparPtsTop[is], N, offset, unit, bRightCap, forceFlat);
-                exportSTLTriangle3dPrintable(outStreamData, outStreamText, binaryOut, PtFoilBot[ic+1], sparPtsBot[is], sparPtsBot[is+1], N, offset, unit, bRightCap, forceFlat);
+                // add tri linking last foil to next foil point
+                exportSTLTriangle3dPrintable(outStreamData, outStreamText, binaryOut, PtFoilTop[ic], PtFoilTop[ic+1], sparPtsTop[is], N, offset, unit, bRightCap, forceFlat);
+                exportSTLTriangle3dPrintable(outStreamData, outStreamText, binaryOut, PtFoilBot[ic], sparPtsBot[is], PtFoilBot[ic+1], N, offset, unit, bRightCap, forceFlat);
                 iTriangles +=2;
-                is++;
+
+                while (is < sparPtsTop.size()-1) {
+                    exportSTLTriangle3dPrintable(outStreamData, outStreamText, binaryOut, PtFoilTop[ic+1], sparPtsTop[is+1], sparPtsTop[is], N, offset, unit, bRightCap, forceFlat);
+                    exportSTLTriangle3dPrintable(outStreamData, outStreamText, binaryOut, PtFoilBot[ic+1], sparPtsBot[is], sparPtsBot[is+1], N, offset, unit, bRightCap, forceFlat);
+                    iTriangles +=2;
+                    is++;
+                }
             }
 
             // and the final tri to correctly stitch the spar TE to both top and bottom foils
@@ -3909,37 +3911,39 @@ uint32_t Wing::stitchFoilFaceComplex(QDataStream &outStreamData, QTextStream &ou
             } else {
                 // if past the final spar then generate a spar which is well beyond
                 //    the chord length of the wing so the checks aren't triggered
-                sparPtsTop = {{FLT_MAX, FLT_MAX, FLT_MAX}};
-                sparPtsBot = {{FLT_MAX, FLT_MAX, FLT_MAX}};
+                sparPtsTop = {{__FLT_MAX__, __FLT_MAX__, __FLT_MAX__}};
+                sparPtsBot = {{__FLT_MAX__, __FLT_MAX__, __FLT_MAX__}};
             }
 
             sparIdx++;
             is = 0;
         }
         else {
-            exportSTLTriangle3dPrintable(outStreamData, outStreamText, binaryOut, PtFoilTop[ic-1], PtFoilTop[ic], sparPtsTop[is], N, offset, unit, bRightCap, forceFlat);
-            exportSTLTriangle3dPrintable(outStreamData, outStreamText, binaryOut, PtFoilBot[ic], PtFoilBot[ic-1], sparPtsBot[is], N, offset, unit, bRightCap, forceFlat);
-            iTriangles +=2;
+            //TODO: need to figure out consequences of needing this check (ie in what circumstances does it fail and does it matter)
+            if (is < sparPtsTop.size()) {
 
-            // we're somewhere over the top of the spar
-            // keep stitching to the same foil point until the spar point is beyond
-            while (PtFoilTop[ic+1].x > sparPtsTop[is].x && is < sparPtsTop.size()) {
-                exportSTLTriangle3dPrintable(outStreamData, outStreamText, binaryOut, PtFoilTop[ic], sparPtsTop[is+1], sparPtsTop[is], N, offset, unit, bRightCap, forceFlat);
-                exportSTLTriangle3dPrintable(outStreamData, outStreamText, binaryOut, PtFoilBot[ic], sparPtsBot[is], sparPtsBot[is+1], N, offset, unit, bRightCap, forceFlat);
+                exportSTLTriangle3dPrintable(outStreamData, outStreamText, binaryOut, PtFoilTop[ic-1], PtFoilTop[ic], sparPtsTop[is], N, offset, unit, bRightCap, forceFlat);
+                exportSTLTriangle3dPrintable(outStreamData, outStreamText, binaryOut, PtFoilBot[ic], PtFoilBot[ic-1], sparPtsBot[is], N, offset, unit, bRightCap, forceFlat);
                 iTriangles +=2;
 
-                is++;
+                // we're somewhere over the top of the spar
+                // keep stitching to the same foil point until the spar point is beyond
+                while (PtFoilTop[ic+1].x > sparPtsTop[is].x && is < sparPtsTop.size()) {
+                    exportSTLTriangle3dPrintable(outStreamData, outStreamText, binaryOut, PtFoilTop[ic], sparPtsTop[is+1], sparPtsTop[is], N, offset, unit, bRightCap, forceFlat);
+                    exportSTLTriangle3dPrintable(outStreamData, outStreamText, binaryOut, PtFoilBot[ic], sparPtsBot[is], sparPtsBot[is+1], N, offset, unit, bRightCap, forceFlat);
+                    iTriangles +=2;
+
+                    is++;
+                }
+
+                if (PtFoilTop[ic+1].x <= sparPtsTop.back().x) {
+                    exportSTLTriangle3dPrintable(outStreamData, outStreamText, binaryOut, PtFoilTop[ic], PtFoilTop[ic+1], sparPtsTop[is], N, offset, unit, bRightCap, forceFlat);
+                    exportSTLTriangle3dPrintable(outStreamData, outStreamText, binaryOut, PtFoilBot[ic], sparPtsBot[is], PtFoilBot[ic+1], N, offset, unit, bRightCap, forceFlat);
+                    iTriangles +=2;
+
+                    is++;
+                }
             }
-
-            if (PtFoilTop[ic+1].x <= sparPtsTop.back().x) {
-                exportSTLTriangle3dPrintable(outStreamData, outStreamText, binaryOut, PtFoilTop[ic], PtFoilTop[ic+1], sparPtsTop[is], N, offset, unit, bRightCap, forceFlat);
-                exportSTLTriangle3dPrintable(outStreamData, outStreamText, binaryOut, PtFoilBot[ic], sparPtsBot[is], PtFoilBot[ic+1], N, offset, unit, bRightCap, forceFlat);
-                iTriangles +=2;
-
-                is++;
-            }
-
-
         }
     }
 
@@ -4036,6 +4040,9 @@ QVector<Vector3d> Wing::generateSparPoints(sparStruct spar, double y)
 //    if ((spar.pL.y > y) || (spar.pR.y < y))
 //        return {};                      // The spar never intersects this y-plane
 
+    // step around the rim of the ellipse generating points
+    if (spar.vertexCount % 2 != 0)
+        spar.vertexCount ++;
 
     // find the centre of the spar at the point of interest
     double sparTau = (y - spar.pL.y) / (spar.pR.y - spar.pL.y);
@@ -4100,9 +4107,9 @@ QVector<Vector3d> Wing::generateSparPointsTB(sparStruct spar, double y, bool top
     if (spar.vertexCount % 2 != 0)
         spar.vertexCount ++;
     int transition = spar.vertexCount/2;
-    qDebug()  << "\n" << "vertexCount=" << spar.vertexCount << "  transition" << transition;
+    //qDebug()  << "\n" << "vertexCount=" << spar.vertexCount << "  transition" << transition;
     if (top) {
-        qDebug() << "TOP:-";
+        //qDebug() << "TOP:-";
         // add points going clockwise
         for (int i = transition; i >= 0; i--)
         {
@@ -4110,10 +4117,10 @@ QVector<Vector3d> Wing::generateSparPointsTB(sparStruct spar, double y, bool top
             Vector3d l0 = {a * std::cos(rl0) * spar.radius + sparPt.x, y, b * std::sin(rl0) * spar.radius + sparPt.z};
 
             pts.push_back(l0);
-            qDebug() << "spar: { " << l0.x << "," << l0.y << ","  << l0.z << " }" ;
+            //qDebug() << "spar: { " << l0.x << "," << l0.y << ","  << l0.z << " }" ;
         }
     } else {
-        qDebug() << "BOTTOM:-";
+        //qDebug() << "BOTTOM:-";
         // add points going anticlockwise
         for (int i = transition; i <= spar.vertexCount; i++)
         {
@@ -4121,7 +4128,7 @@ QVector<Vector3d> Wing::generateSparPointsTB(sparStruct spar, double y, bool top
             Vector3d l0 = {a * std::cos(rl0) * spar.radius + sparPt.x, y, b * std::sin(rl0) * spar.radius + sparPt.z};
 
             pts.push_back(l0);
-            qDebug() << "spar: { " << l0.x << "," << l0.y << ","  << l0.z << " }" ;
+            //qDebug() << "spar: { " << l0.x << "," << l0.y << ","  << l0.z << " }" ;
         }
 
     }
@@ -4358,53 +4365,145 @@ uint32_t Wing::exportSTL3dPrintable(QDataStream &outStreamData, QTextStream &out
 
     // load this surface a bit early to provide a locator for the spar
     m_Surface[1].getSidePoints(xfl::TOPSURFACE, nullptr, PtPrimaryTopLeft, PtPrimaryTopRight, NormalPrimaryTopA, NormalPrimaryTopB, CHORDPANELS+1);
+    m_Surface[1].getSidePoints(xfl::BOTSURFACE, nullptr, PtPrimaryBotLeft, PtPrimaryBotRight, NormalPrimaryBotA, NormalPrimaryBotB, CHORDPANELS+1);
+
 
     // create a test spar. NB Spars will not be correctly modeled if they penetrate the wing surface
     spars.clear();
 
-    if (false) {
+    float minimumSparClearanceFromOuterSurface = 0.9*mm; // mm (this should be twice the width of a printed line on the bottom layer (because there will need to be an outer wall and a spar surround both top and bottom)
+    float tauSuggestAtDistance = 6/11;
+    Vector3d tauLE = PtPrimaryTopLeft[0] * (1.0-tauSuggestAtDistance) + PtPrimaryTopRight.back() * tauSuggestAtDistance;
+    Vector3d tauTE = PtPrimaryTopLeft.back() * (1.0-tauSuggestAtDistance) + PtPrimaryTopRight.back() * tauSuggestAtDistance;
+
+    if (true) {
         //DragonWing
+
+        // Create a new spar with initial reference point at the leading edge (ie the [0] item)
         spars.push_back({});
         spars[0].pL = PtPrimaryTopLeft[0];
-        spars[0].pL.x += 5*mm;
+        spars[0].pL.x += 7*mm;                      // +ve will move the point in the direction of TE, -ve towards LE
+        spars[0].pL.z += 0.2*mm;                    // +ve will move the point in the direction of top surface, -ve towards bottom
         spars[0].pR = PtPrimaryTopRight[0];
-        spars[0].pR.x += 5*mm;
-        spars[0].radius = 1.1*mm;
+        spars[0].pR.x += 16*mm;                      // +ve will move the point in the direction of TE, -ve towards LE
+        spars[0].pR.z -= 0.75*mm;                    // +ve will move the point in the direction of top surface, -ve towards bottom
+        spars[0].radius = 2.5*mm;
         spars[0].vertexCount = 25;          // if this isn't an even number it will be rounded up to one
         spars[0].type = SPARCUTOUT;
 
+        // WARNING: qDebug() only flushes to the Application Output when the program exits cleanly :-(
+        qDebug() << "Suggested optimal spar locations\nWARNING: this is only approx as not currently checking to ensure the clearance from every surface point to the suggested location is sufficient";
+
+        // locate spar[0] at the closest point to the LE
+        for (int pt=0; pt < PtPrimaryTopLeft.size(); pt++) {
+            float h = (PtPrimaryTopLeft[pt].z - PtPrimaryBotLeft[pt].z)/2;
+            //qDebug() << h;
+            if (h - minimumSparClearanceFromOuterSurface > spars[0].radius) {
+                std::string outStr = "Spar0: LHS Loc: x=" + std::to_string((PtPrimaryTopLeft[pt].x - PtPrimaryTopLeft[0].x)/mm) +
+                        "mm; z=" + std::to_string(((PtPrimaryTopLeft[pt].z + PtPrimaryBotLeft[pt].z)/2 - PtPrimaryTopLeft[0].z)/mm) + "mm";
+                qDebug() << outStr.c_str();
+                //QMessageBox msgBox;
+                //msgBox.setText(outStr);
+                //msgBox.exec();
+                break;
+            }
+        }
+
+        for (int pt=0; pt < PtPrimaryTopLeft.size(); pt++) {
+            Vector3d tauTop = PtPrimaryTopLeft[pt] * (1.0-tauSuggestAtDistance) + PtPrimaryTopRight[pt] * tauSuggestAtDistance;
+            Vector3d tauBot = PtPrimaryBotLeft[pt] * (1.0-tauSuggestAtDistance) + PtPrimaryBotRight[pt] * tauSuggestAtDistance;
+            float h = (tauTop.z - tauBot.z)/2;
+            if (h - minimumSparClearanceFromOuterSurface > spars[0].radius) {
+                std::string outStr = "Spar0: Mid Loc: x=" + std::to_string((tauTop.x - tauLE.x)/mm) +
+                        "mm; z=" + std::to_string((tauTop.z - (tauTop.z + tauBot.z)/2)/mm) + "mm (at tau of " + std::to_string(tauSuggestAtDistance);
+                qDebug() << outStr.c_str();
+//                qDebug() << "This will require RHS spar point of : x=" << (PtPrimaryTopRight[pt].x - PtPrimaryTopRight[0].x)/mm
+//                                << "mm; z=" << ((PtPrimaryTopRight[pt].z + PtPrimaryBotRight[pt].z)/2 - PtPrimaryTopRight[0].z)/mm << "mm";
+                break;
+            }
+        }
+
+        for (int pt=0; pt < PtPrimaryTopRight.size(); pt++) {
+            float h = (PtPrimaryTopRight[pt].z - PtPrimaryBotRight[pt].z)/2;
+            if (h - minimumSparClearanceFromOuterSurface > spars[0].radius) {
+                qDebug() << "Spar0: RHS Loc: x=" << (PtPrimaryTopRight[pt].x - PtPrimaryTopRight[0].x)/mm
+                    << "mm; z=" << ((PtPrimaryTopRight[pt].z + PtPrimaryBotRight[pt].z)/2 - PtPrimaryTopRight[0].z)/mm << "mm";
+                break;
+            }
+        }
+        qDebug();
+
+        // Create a new spar with initial reference point at the trailing edge (ie the .back() item)
         spars.push_back({});
         spars[1].pL = PtPrimaryTopLeft.back();
-        spars[1].pL.x -= 20*mm;
-        spars[1].pL.z += 3*mm;
+        spars[1].pL.x -= 21*mm;             // +ve will move the point in the direction of TE, -ve towards LE
+        spars[1].pL.z += 3*mm;              // +ve will move the point in the direction of top surface, -ve towards bottom
         spars[1].pR = PtPrimaryTopRight.back();
-        spars[1].pR.x -= 20*mm;
-        spars[1].pR.z += 6*mm;
+        spars[1].pR.x -= 17*mm;                      // +ve will move the point in the direction of TE, -ve towards LE
+        spars[1].pR.z += 4.75*mm;              // +ve will move the point in the direction of top surface, -ve towards bottom
         spars[1].radius = 1.1*mm;
-        spars[1].vertexCount = 25;          // if this isn't an even number it will be rounded up to one
+        spars[1].vertexCount = 20;          // if this isn't an even number it will be rounded up to one
         spars[1].type = SPARCUTOUT;
+
+
+        // locate spar[1] at the closest point to the TE
+        for (int pt = PtPrimaryTopLeft.size()-1; pt>=0; pt--) {
+            float h = (PtPrimaryTopLeft[pt].z - PtPrimaryBotLeft[pt].z)/2;
+            if (h - minimumSparClearanceFromOuterSurface > spars[1].radius) {
+                qDebug() << "Spar1: LHS Loc: x=" << (PtPrimaryTopLeft[pt].x - PtPrimaryTopLeft.back().x)/mm
+                    << "mm; z=" << ((PtPrimaryTopLeft[pt].z + PtPrimaryBotLeft[pt].z)/2 - PtPrimaryTopLeft[0].z)/mm << "mm";
+                break;
+            }
+
+        }
+
+        for (int pt = PtPrimaryTopLeft.size()-1; pt>=0; pt--) {
+            Vector3d tauTop = PtPrimaryTopLeft[pt] * (1.0-tauSuggestAtDistance) + PtPrimaryTopRight[pt] * tauSuggestAtDistance;
+            Vector3d tauBot = PtPrimaryBotLeft[pt] * (1.0-tauSuggestAtDistance) + PtPrimaryBotRight[pt] * tauSuggestAtDistance;
+            float h = (tauTop.z - tauBot.z)/2;
+            if (h - minimumSparClearanceFromOuterSurface > spars[1].radius) {
+                qDebug() << "Spar1: Mid Loc: x=" << (tauTop.x - tauTE.x)/mm
+                    << "mm; z=" << (tauTop.z - (tauTop.z + tauBot.z)/2)/mm << "mm (at tau of " << tauSuggestAtDistance;
+//                qDebug() << "This will require RHS spar point of : x=" << (PtPrimaryTopRight[pt].x - PtPrimaryTopRight.back().x)/mm
+//                    << "mm; z=" << ((PtPrimaryTopRight[pt].z + PtPrimaryBotRight[pt].z)/2 - PtPrimaryTopRight.back().z)/mm << "mm";
+
+                break;
+            }
+        }
+
+        for (int pt = PtPrimaryTopRight.size()-1; pt>=0; pt--) {
+            float h = (PtPrimaryTopRight[pt].z - PtPrimaryBotRight[pt].z)/2;
+            if (h - minimumSparClearanceFromOuterSurface > spars[1].radius) {
+                qDebug() << "Spar1: RHS Loc: x=" << (PtPrimaryTopRight[pt].x - PtPrimaryTopRight.back().x)/mm
+                    << "mm; z=" << ((PtPrimaryTopRight[pt].z + PtPrimaryBotRight[pt].z)/2 - PtPrimaryTopRight[0].z)/mm << "mm";
+                break;
+            }
+        }
+        qDebug() << "End of optimal spar location suggestions";
+
+
     }
     if (false) {
 
         //TriDrone
         spars.push_back({});
         spars[0].pL = PtPrimaryTopLeft[0];
-        spars[0].pL.x += 5*mm;
+        spars[0].pL.x += 3.5*mm;
         spars[0].pL.z += 0.2*mm;
         spars[0].pR = PtPrimaryTopRight[0];
-        spars[0].pR.x += 5*mm;
-        spars[0].pL.z += 0.50*mm;
+        spars[0].pR.x += 3.5*mm;
+        spars[0].pL.z += 0.2*mm;
         spars[0].radius = 1.1*mm;
         spars[0].vertexCount = 25;          // if this isn't an even number it will be rounded up to one
         spars[0].type = SPARCUTOUT;
 
         spars.push_back({});
         spars[1].pL = PtPrimaryTopLeft.back();
-        spars[1].pL.x -= 15*mm;
-        spars[1].pL.z += 0.65*mm;
+        spars[1].pL.x -= 16*mm;
+        spars[1].pL.z += 0.6*mm;
         spars[1].pR = PtPrimaryTopRight.back();
-        spars[1].pR.x -= 20*mm;
-        spars[1].pR.z += 0.55*mm;
+        spars[1].pR.x -= 16*mm;
+        spars[1].pR.z += 0.6*mm;
         spars[1].radius = 1.1*mm;
         spars[1].vertexCount = 25;          // if this isn't an even number it will be rounded up to one
         spars[1].type = SPARCUTOUT;
