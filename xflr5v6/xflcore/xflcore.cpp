@@ -915,7 +915,7 @@ void xfl::listSysInfo(QString &info)
     info += "\n";
 
 
-    info += "MAC adresses:";
+    info += "MAC addresses:";
     foreach(QNetworkInterface netInterface, QNetworkInterface::allInterfaces())
     {
         // Return only the first non-loopback MAC Address

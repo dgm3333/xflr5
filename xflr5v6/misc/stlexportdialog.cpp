@@ -100,7 +100,7 @@ void STLExportDlg::setupLayout()
         }
 
 
-        QGroupBox *pDimensionsBox = new QGroupBox(tr("3D printable dimensions (mm *NOT* metres for printer compatability)"));
+        QGroupBox *pDimensionsBox = new QGroupBox(tr("3D printable dimensions (mm *NOT* metres for printer compatibility)"));
         {
             QVBoxLayout *pDimensionsLayout = new QVBoxLayout;
             {

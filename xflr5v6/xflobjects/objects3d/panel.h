@@ -103,11 +103,11 @@ class Panel
 
 
     protected:
-        bool m_bIsInSymPlane;    /**< true if the panel lies in the plane's xz plane of symetry at y=0*/
+        bool m_bIsInSymPlane;    /**< true if the panel lies in the plane's xz plane of symmetry at y=0*/
         bool m_bIsLeftPanel;     /**< true if the panel lies on the left (port) wing */
         bool m_bIsWakePanel;     /**< true if the panel lies on the wake of a winf */
 
-        int m_iElement;          /**< panel identification number ; used when the panel array is re-arranged in non sequential order to reduce the matrix size in symetrical calculations */
+        int m_iElement;          /**< panel identification number ; used when the panel array is re-arranged in non sequential order to reduce the matrix size in symmetrical calculations */
         int m_iPL;               /**< index of the panel which lies left of this panel, or -1 if none */
         int m_iPR;               /**< index of the panel which lies right of this panel, or -1 if none */
         int m_iPU;               /**< index of the panel which lies upstream of this panel, or -1 if none */
@@ -115,7 +115,7 @@ class Panel
         int m_iWake;             /**< -1 if not followed by a wake panel, else equal to wake panel number */
         int m_iWakeColumn;       /**< index of the wake column shed by this panel, numbered from left tip to right tip, or -1 if none */
 
-        //Local frame of refernce
+        //Local frame of reference
         Vector3d VortexPos;       /**< the absolute position of the mid point of the bound vortex at the panel's quarter chord */
         Vector3d Vortex;          /**< the bound vortex vector at the panel's quarter chord */
         Vector3d P1;              /**< the coordinates of the panel's corners, in local coordinates */

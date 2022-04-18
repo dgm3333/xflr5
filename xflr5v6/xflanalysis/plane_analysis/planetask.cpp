@@ -291,7 +291,7 @@ WPolar* PlaneTask::setWPolarObject(Plane *pCurPlane, WPolar *pCurWPolar)
  *         body
  *
  * A copy of the panels is saved to the MemPanel and MemNode arrays
- *@return true if successful, false if the panels could not be properly created ot if no object is active
+ *@return true if successful, false if the panels could not be properly created or if no object is active
 */
 bool PlaneTask::initializePanels()
 {
@@ -307,7 +307,7 @@ bool PlaneTask::initializePanels()
     {
 //        Trace(QString("PlaneTask::Requesting additional memory for %1 panels").arg(PanelArraySize));
 
-        // allocate 10% more than needed to avoid repeating the operation if the user requirement increases sightly again.
+        // allocate 10% more than needed to avoid repeating the operation if the user requirement increases slightly again.
         m_MaxPanelSize = int(double(PanelArraySize) *1.1);
         releasePanelMemory();
 

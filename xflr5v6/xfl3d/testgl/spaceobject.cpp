@@ -26,7 +26,7 @@ Planet::Planet()
     m_Color.setHsv(h,s,v,255);
 
     m_a      = 0;        // semi-major axis
-    m_e      = 0;        // excentricity
+    m_e      = 0;        // eccentricity
     m_i      = 0;        // inclination
     m_Omega  = 0;    // longitude of the ascending node
     m_omega  = 0;    // argument of periapsis

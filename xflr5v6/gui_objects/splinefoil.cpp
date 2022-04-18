@@ -26,7 +26,7 @@
 #include <xflobjects/objects_global.h>
 
 /**
- * The public costructor.
+ * The public constructor.
  */
 SplineFoil::SplineFoil()
 {
@@ -89,7 +89,7 @@ void SplineFoil::initSplineFoil()
 }
 
 /**
- * Calculates the SplineFoil's mid-camber line and stores the resutls in the memeber array.
+ * Calculates the SplineFoil's mid-camber line and stores the resutls in the member array.
  * @return
  */
 void SplineFoil::compMidLine()
@@ -399,7 +399,7 @@ void SplineFoil::updateSplineFoil()
  * @param painter a reference to the QPainter object with which to draw
  * @param scalex the scale of the view in the x direction
  * @param scaley the scale of the view in the y direction
- * @param Offset the postion of the SplineFoil's leading edge point
+ * @param Offset the position of the SplineFoil's leading edge point
  */
 void SplineFoil::drawCtrlPoints(QPainter &painter, double scalex, double scaley, QPointF Offset)
 {
@@ -412,7 +412,7 @@ void SplineFoil::drawCtrlPoints(QPainter &painter, double scalex, double scaley,
  * @param painter a reference to the QPainter object with which to draw
  * @param scalex the scale of the view in the x direction
  * @param scaley the scale of the view in the y direction
- * @param Offset the postion of the SplineFoil's leading edge point
+ * @param Offset the position of the SplineFoil's leading edge point
  */
 void SplineFoil::drawOutPoints(QPainter & painter, double scalex, double scaley, QPointF Offset)
 {
@@ -425,7 +425,7 @@ void SplineFoil::drawOutPoints(QPainter & painter, double scalex, double scaley,
  * @param painter a reference to the QPainter object with which to draw
  * @param scalex the scale of the view in the x direction
  * @param scaley the scale of the view in the y direction
- * @param Offset the postion of the SplineFoil's leading edge point
+ * @param Offset the position of the SplineFoil's leading edge point
  */
 void SplineFoil::drawFoil(QPainter &painter, double scalex, double scaley, QPointF Offset)
 {
@@ -439,7 +439,7 @@ void SplineFoil::drawFoil(QPainter &painter, double scalex, double scaley, QPoin
  * @param painter a reference to the QPainter object with which to draw
  * @param scalex the scale of the view in the x direction
  * @param scaley the scale of the view in the y direction
- * @param Offset the postion of the SplineFoil's leading edge point
+ * @param Offset the position of the SplineFoil's leading edge point
  */
 void SplineFoil::drawMidLine(QPainter &painter, double scalex, double scaley, QPointF Offset)
 {

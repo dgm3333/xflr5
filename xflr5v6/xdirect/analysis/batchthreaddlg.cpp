@@ -35,7 +35,7 @@
 
 
 /**
- * The public contructor
+ * The public constructor
  */
 BatchThreadDlg::BatchThreadDlg(QWidget *pParent) : BatchAbstractDlg(pParent)
 {
@@ -299,7 +299,7 @@ void BatchThreadDlg::startThread()
 
 
 /**
- * Adds a text message to the ouput widget
+ * Adds a text message to the output widget
  * @param str the message to output
  */
 void BatchThreadDlg::updateOutput(QString const&str)

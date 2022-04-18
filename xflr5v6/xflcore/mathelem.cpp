@@ -412,9 +412,9 @@ bool isOdd(int n)
 }
 
 
-/** input uniformly spaced in [0,1], ouput bunched in [0,1]
+/** input uniformly spaced in [0,1], output bunched in [0,1]
     BunchAmp:  k=0.0 --> uniform bunching, k=1-->full varying bunch
-    BunchDist: k=0.0 --> uniform bunching, k=1 weigth on endpoints
+    BunchDist: k=0.0 --> uniform bunching, k=1 weight on endpoints
 */
 double bunchedParameter(double bunchdist, double bunchamp, double t)
 {
@@ -441,7 +441,7 @@ double bunchedParameter(double bunchdist, double bunchamp, double t)
 }
 
 /** Performs a linear regression of the array of n points (x_i, y_i) and
- * calculater the coefficients of line y = ax+b.
+ * calculates the coefficients of line y = ax+b.
  * Returns true if the line could be calculated, false if not */
 bool linearRegression(int n, double const *x, double const*y, double &a, double &b)
 {

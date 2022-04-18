@@ -75,7 +75,7 @@ public:
     double m_Chord;         /**< Chord length at each panel side */
     double m_Length;        /**< the length of each panel */
     double m_YPosition;     /**< b-position of each panel end on developed surface */
-    double m_YProj;         /**< b-position of each panel end projected on tbe xy plane */
+    double m_YProj;         /**< b-position of each panel end projected on the xy plane */
     double m_Offset;        /**< b-position of each panel end */
     double m_Dihedral;      /**< b-position of each panel end */
     double m_ZPos;          /**< vertical offset - calculation result only */

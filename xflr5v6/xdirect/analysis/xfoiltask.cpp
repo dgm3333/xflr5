@@ -66,7 +66,7 @@ XFoilTask::XFoilTask(QObject *pParent)
 
 /**
 * Implements the run method of the QRunnable virtual base method
-* Asssumes that XFoil has been initialized with Foil and Polar
+* Assumes that XFoil has been initialized with Foil and Polar
 */
 void XFoilTask::run()
 {
@@ -93,7 +93,7 @@ void XFoilTask::run()
 * Initializes the XFoil calculation
 * @param pFoil a pointer to the instance of the Foil object for which the calculation is run
 * @param pPolar a pointer to the instance of the Polar object for which the calculation is run
-* @return true if the initialization of the Foil in XFoil has been sucessful, false otherwise
+* @return true if the initialization of the Foil in XFoil has been successful, false otherwise
 */
 bool XFoilTask::initializeTask(FoilAnalysis &foilanalysis, bool bViscous, bool bInitBL, bool bFromZero)
 {
@@ -105,7 +105,7 @@ bool XFoilTask::initializeTask(FoilAnalysis &foilanalysis, bool bViscous, bool b
 * Initializes the XFoil calculation
 * @param pFoil a pointer to the instance of the Foil object for which the calculation is run
 * @param pPolar a pointer to the instance of the Polar object for which the calculation is run
-* @return true if the initialization of the Foil in XFoil has been sucessful, false otherwise
+* @return true if the initialization of the Foil in XFoil has been successful, false otherwise
 */
 bool XFoilTask::initializeXFoilTask(Foil const*pFoil, Polar *pPolar, bool bViscous, bool bInitBL, bool bFromZero)
 {

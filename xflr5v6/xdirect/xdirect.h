@@ -276,7 +276,7 @@ class XDirect : public QWidget
 
         int m_posAnimate;          /**< the current aoa in the animation */
 
-        int m_iPlrGraph;           /**< defines whch polar graph is selected if m_iPlrView=1 */
+        int m_iPlrGraph;           /**< defines which polar graph is selected if m_iPlrView=1 */
         xfl::enumGraphView m_iPlrView;  /**< defines the number of graphs to be displayed in the polar view */
 
         QVector<Foil*> *m_poaFoil;    /**< pointer to the foil object array */
@@ -294,7 +294,7 @@ class XDirect : public QWidget
         static bool s_bViscous;           /**< true if performing a viscous calculation, false if inviscid */
         static bool s_bAlpha;             /**< true if performing an analysis based on aoa, false if based on Cl */
         static bool s_bInitBL;            /**< true if the boundary layer should be initialized for the next xfoil calculation */
-        static bool s_bKeepOpenErrors;    /**< true if the XfoilAnalysisDlg should be kept open if errors occured in the XFoil calculation */
+        static bool s_bKeepOpenErrors;    /**< true if the XfoilAnalysisDlg should be kept open if errors occurred in the XFoil calculation */
         static int s_TimeUpdateInterval;  /**< time interval in ms between two output display updates during an XFoil analysis */
         static QVector<double> s_ReList;        /**< the user-defined list of Re numbers, used for batch analysis */
         static QVector<double> s_MachList;      /**< the user-defined list of Mach numbers, used for batch analysis */

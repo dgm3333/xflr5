@@ -355,7 +355,7 @@ void Surface::getTrailingPt(int k, Vector3d &C) const
 
 /**
  * Calculates the corner points of the panel with index k in the span direction and index l in the chordwise direction.
- * The point coordinates are loaded in the memeber variables LA, LB, TA, TB.
+ * The point coordinates are loaded in the member variables LA, LB, TA, TB.
  *
  * Assumes the side points have been set previously
  *

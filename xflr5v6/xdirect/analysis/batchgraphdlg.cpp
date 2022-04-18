@@ -268,7 +268,7 @@ void BatchGraphDlg::alphaLoop()
 
 
 /**
- * Cleans up the GUI and paramters at the end of the Analysis.
+ * Cleans up the GUI and parameters at the end of the Analysis.
  */
 void BatchGraphDlg::cleanUp()
 {
@@ -563,7 +563,7 @@ void BatchGraphDlg::readParams()
  * Loops through all the specified Relist, and for each element of the list:
  *  - creates a Polar object
  *  - initializes the XFoilTask object
- *  - launches the XFoilTask whcih will loop over the specified aoa or Cl range
+ *  - launches the XFoilTask which will loop over the specified aoa or Cl range
  */
 void BatchGraphDlg::ReLoop()
 {

@@ -490,7 +490,7 @@ void Plane::createSurfaces()
 
 
 /**
-* Initiliazes the pointer to an existing Body object
+* Initializes the pointer to an existing Body object
 * @param pBody the pointer to the existing Body object
 */
 void Plane::setBody(Body *pBody)

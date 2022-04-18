@@ -388,7 +388,7 @@ class Wing
         double m_CDi;                    /**< the wing's induced drag coefficient for the current calculation */
         double m_CDv;                    /**< the wing's viscous drag coefficient for the current calculation */
         double m_WingCL;                     /**< the lift coefficient */
-        double m_Maxa;                   /**< the convergence crtierion on the difference of induced angle at any span bewteen two LLT iterations*/
+        double m_Maxa;                   /**< the convergence crtierion on the difference of induced angle at any span between two LLT iterations*/
         double m_ICm;                    /**< the induced par of the pitching moment coefficient */
         double m_GCm;                    /**< the total pitching moment coefficient */
         double m_VCm;                    /**< the viscous part of the pitching moment coefficient */
@@ -451,7 +451,7 @@ class Wing
         Vector3d m_CoG;                            /**< the position of the CoG */
 
         int m_FirstPanelIndex;                          /**< the index of this wing's first panel in the array of panels */
-        int m_nPanels;                             /**< the number of mesh panels on this Wing; dependant on the polar type */
+        int m_nPanels;                             /**< the number of mesh panels on this Wing; dependent on the polar type */
 
         static QVector<Foil*> *s_poaFoil;
         static QVector<Polar*> *s_poaPolar;

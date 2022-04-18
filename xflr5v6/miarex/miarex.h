@@ -80,7 +80,7 @@ class gl3dMiarexView;
     - Construction of the panels for 3D calculations
     - Management of the display
     - Management of the LLT and Panel Analysis,
-    - Mapping of the analyis results to the operating point and polar objects
+    - Mapping of the analysis results to the operating point and polar objects
 */
 class Miarex : public QWidget
 {
@@ -368,7 +368,7 @@ class Miarex : public QWidget
         bool m_bShowCp;                    /**< true if the active curve should be displayed in Cp view */
         bool m_bShowEllipticCurve;         /**< true if the elliptic loading should be displayed in the local lift graph */
         bool m_bShowBellCurve;             /**< true if the bell distribution loading should be displayed in the local lift graph */
-        bool m_bShowWingCurve[MAXWINGS];   /**< true if various plane's wing curves shoud be displayed*/
+        bool m_bShowWingCurve[MAXWINGS];   /**< true if various plane's wing curves should be displayed*/
         bool m_bShowFlapMoments;           /**< true if the flap moment values should be display together with the operating point results*/
         bool m_bTrans;                     /**< true if the view is being dragged */
         bool m_bTransGraph;                   /**< true if a graph is being dragged */

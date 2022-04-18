@@ -142,7 +142,7 @@ void gl3dMiarexView::glRenderView()
         //apply aoa rotation
         m_matModel.rotate(float(pPOpp->alpha()),0.0,1.0,0.0);
 
-        /* CP position alredy includes the sideslip geometry, shond't be rotated by sideslip*/
+        /* CP position already includes the sideslip geometry, shond't be rotated by sideslip*/
         if(s_pMiarex->m_bXCP)
         {
             for(int iw=0; iw<MAXWINGS; iw++)

@@ -1283,7 +1283,7 @@ void AFoil::saveSettings(QSettings &settings)
 
 /**
  * The user has requested the context menu associated to the Foil table.
- * @param position the right-click positon
+ * @param position the right-click position
  */
 void AFoil::onFoilTableCtxMenu(const QPoint &)
 {

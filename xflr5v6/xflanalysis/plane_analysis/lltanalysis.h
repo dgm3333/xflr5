@@ -191,7 +191,7 @@ private:
     static int s_NLLTStations;                  /**< The number of LLT stations in the spanwise direction */
     static double s_RelaxMax;                   /**< The relaxation factor for the iterations */
     static double s_CvPrec;                     /**< Precision criterion to stop the iterations. The difference in induced angle at any span point between two iterations should be less than the criterion */
-    static bool s_bInitCalc;                    /**< true if the iterations analysis should be intialized with the linear solution at each new a.o.a. calculation, false otherwise */
+    static bool s_bInitCalc;                    /**< true if the iterations analysis should be initialized with the linear solution at each new a.o.a. calculation, false otherwise */
 
     QVector<PlaneOpp*> m_PlaneOppList;
     QVector<Polar*> const *m_poaPolar;

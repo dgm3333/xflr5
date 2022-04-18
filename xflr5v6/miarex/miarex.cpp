@@ -1443,7 +1443,7 @@ void Miarex::fillWOppCurve(WingOpp const *pWOpp, Graph *pGraph, Curve *pCurve)
 
 
 /**
-* Fills the curve of the stability graph with the data from the pWPolar oject for the seleted mode
+* Fills the curve of the stability graph with the data from the pWPolar object for the selected mode
 *@param pCurve  a pointer to the instance of the CCurve object to be filled with the data from the CWPolar object
 *@param pWPolar a pointer to the instance of the CWPolar object from which the data is to be extracted
 *@param iMode the index of the mode for which the curve is to be created
@@ -2438,7 +2438,7 @@ void Miarex::onAnimateWOppSingle()
 
 
 /**
-* Modfies the animation after the user has changed the animation speed for the WOpp display
+* Modifies the animation after the user has changed the animation speed for the WOpp display
 */
 void Miarex::onAnimateWOppSpeed(int val)
 {
@@ -5280,7 +5280,7 @@ void Miarex::onRenameCurWPolar()
 
 
 /**
- * The user has requested that the active wing ot plane be renames
+ * The user has requested that the active wing of plane be renamed
  * Changes the name and updates the references in all child polars and oppoints
  */
 void Miarex::onRenameCurPlane()
@@ -5353,7 +5353,7 @@ void Miarex::onResetCurWPolar()
 
 
 /**
- * The user has toggled the switch for a sequential analyis
+ * The user has toggled the switch for a sequential analysis
  */
 void Miarex::onSequence()
 {
@@ -5787,7 +5787,7 @@ void Miarex::onStoreWOpp()
 
 /**
  * The user has toggled the display of the curves for the second wing in case of a bi-plane
- *@todo not thouroughly tested
+ *@todo not thoroughly tested
  */
 void Miarex::onWing2Curve()
 {
@@ -6252,7 +6252,7 @@ void Miarex::paintPlaneOppLegend(QPainter &painter, QRect drawRect)
 /**
  * Saves the user settings to the QSettings object
  * @param pSettings a pointer to the QSettings object
- * @return true if the save was successfull, false if an error was encountered
+ * @return true if the save was successful, false if an error was encountered
  */
 bool Miarex::saveSettings(QSettings &settings)
 {
@@ -7523,7 +7523,7 @@ void Miarex::drawColorGradient(QPainter &painter, QRect const & gradientRect)
 
 
 /**
-* Searches for an operating point with aoa or velocity or control paramter x, for the active polar
+* Searches for an operating point with aoa or velocity or control parameter x, for the active polar
 * Sets it as active, if valid
 * else sets the current PlaneOpp, if any
 * else sets the comboBox's first, if any

@@ -163,7 +163,7 @@ void Objects2d::insertThisFoil(Foil *pFoil)
     {
         if(pFoil == s_oaFoil.at(iFoil))
         {
-            //            Trace("This foil "+m_FoilName+" aready exists and has not been inserted");
+            //            Trace("This foil "+m_FoilName+" already exists and has not been inserted");
             return;
         }
     }

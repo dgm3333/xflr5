@@ -57,7 +57,7 @@ bool Segment2d::isEncroachedBy(Vector2d const &pt) const
     return d2<r2-PRECISION;
 }
 
-/** shold'nt be needed */
+/** shouldn't be needed */
 bool Segment2d::isEncroachedBy(Triangle2d const &t2d) const
 {
     Vector2d CC;

@@ -69,7 +69,7 @@ XFoil::XFoil()
     xstrip[1] = 1.0;
     xstrip[2] = 1.0;
 
-    //intialize analysis parameter  until user changes them
+    //initialize analysis parameter until user changes them
     //---- default paneling parameters
     npan = 140;
     cvpar = 1.0;
@@ -6197,7 +6197,7 @@ stop12:
     //---- dpsi/dalfa
     z_alfa += - qinf*(sina*yi + cosa*xi);
 
-    //techwinder: removed image calculattion
+    //techwinder: removed image calculation
     return false;
 }
 
@@ -8089,7 +8089,7 @@ void XFoil::sss(double ss, double *s1, double *s2, double del, double xbf, doubl
 //     returns the arc length values s1,s2 of the endpoints
 //     of the airfoil surface segment which "disappears" as a
 //     result of the flap deflection.  the line segments between
-//     these enpoints and the flap hinge point (xbf,ybf) have
+//     these endpoints and the flap hinge point (xbf,ybf) have
 //     an included angle of del.  del is therefore the flap
 //     deflection which will join up the points at s1,s2.
 //     ss is an approximate arc length value near s1 and s2.
@@ -8199,7 +8199,7 @@ void XFoil::sss(double ss, double *s1, double *s2, double del, double xbf, doubl
             a11 =  r1_s1 *sind + ssgn;
             a12 =  r2_s2 *sind - ssgn;
 
-            //------- residual 2: set vector sum of line segments beteen the
+            //------- residual 2: set vector sum of line segments between the
             //-       endpoints and flap hinge to be perpendicular to airfoil surface.
             x1pp = d2val(*s1,x,xp,s,n);
             y1pp = d2val(*s1,y,yp,s,n);
@@ -12244,7 +12244,7 @@ bool XFoil::mixed(int kqsp)
             }
         }
 
-        //---- update gloabal variables
+        //---- update global variables
         psio  = psio  + dq[n+1];
         qdof0 = qdof0 + dq[n+2];
         qdof1 = qdof1 + dq[n+3];

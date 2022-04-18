@@ -23,7 +23,7 @@
 
 #include <cmath>
 
-//caution, use only for "symetrical" sliders ranging from -range to +range
+//caution, use only for "symmetrical" sliders ranging from -range to +range
 
 ExponentialSlider::ExponentialSlider(QWidget * pParent)
 {

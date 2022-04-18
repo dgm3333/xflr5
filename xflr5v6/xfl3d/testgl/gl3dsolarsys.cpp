@@ -314,7 +314,7 @@ void gl3dSolarSys::glMake3dObjects()
 
         // make Halley's ellipse
         double a = 17.834 * 1.495978707e11; // semi-major axis length
-        double e = 0.96714; //excentricity
+        double e = 0.96714; //eccentricity
         glMakeEllipseFan(a/SCALEFACTOR, e, Vector3d(), m_vboHalleyEllipse);
 
        m_bResetPlanet = false;
@@ -506,7 +506,7 @@ void gl3dSolarSys::makePlanets()
 
     m_Halley.m_Radius = 1.0; // whatever
     m_Halley.m_a = 17.834 * 1.495978707e11; // semi-major axis length
-    m_Halley.m_e = 0.96714; //excentricity
+    m_Halley.m_e = 0.96714; //eccentricity
     m_Halley.m_i = -180.0f+162.26f;
     m_Halley.m_omega = 111.33;
     Distance = m_Halley.m_a*(m_Halley.m_e+1.0); // apogee distance to Sun

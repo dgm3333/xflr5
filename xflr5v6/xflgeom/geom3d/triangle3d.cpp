@@ -263,7 +263,7 @@ void Triangle3d::displayNodes(const QString &msg) const
 
 /**
 * Finds the intersection point of a line segment with the triangle.
-* The segement is defined by its two endpoints
+* The segment is defined by its two endpoints
 * @param A the segment's first end point
 * @param B the segment's second end point
 * @param I the intersection point

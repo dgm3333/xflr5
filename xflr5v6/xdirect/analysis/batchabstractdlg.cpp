@@ -81,7 +81,7 @@ int BatchAbstractDlg::s_nThreads = 1;
 QByteArray BatchAbstractDlg::s_Geometry;
 
 /**
- * The public contructor
+ * The public constructor
  */
 BatchAbstractDlg::BatchAbstractDlg(QWidget *pParent) : QDialog(pParent)
 {
@@ -447,7 +447,7 @@ void BatchAbstractDlg::initDialog()
 
 
 /**
- * The user has switched between aoa and lift coeficient.
+ * The user has switched between aoa and lift coefficient.
  * Initializes the interface with the corresponding values.
  */
 void BatchAbstractDlg::onAcl()

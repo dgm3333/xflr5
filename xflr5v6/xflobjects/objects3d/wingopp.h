@@ -37,7 +37,7 @@
 *@brief
 *    This class implements the operating point object which stores the data of plane analysis
 *
-    In the case of an analysis of an independant wing, the instance of this WingOpp class is
+    In the case of an analysis of an independent wing, the instance of this WingOpp class is
     uniquely associated to an instance of a WPolar, which is itself uniquely associated to the Wing object.
     Alternatively, the WingOpp may be a member variable of a PlaneOpp object.
     The data is stored in International Standard Units, i.e. meters, seconds, kg, and Newtons.
@@ -148,8 +148,8 @@ public:
     double m_XCPSpanRel[MAXSPANSTATIONS+1]; /**< the relative position of the centre of pressure on each chordwise strip, in chord % */
     double m_XCPSpanAbs[MAXSPANSTATIONS+1]; /**< the absolute position of the centre of pressure on each chordwise strip */
     double m_StripArea[MAXSPANSTATIONS+1];  /**< the area of the chordwise strips */
-    double m_XTrTop[MAXSPANSTATIONS+1];     /**< the transition location on the top surface*/
-    double m_XTrBot[MAXSPANSTATIONS+1];     /**< the transition location on the bottom suface */
+    double m_XTrTop[MAXSPANSTATIONS+1];     /**< the transition location on the top surface */
+    double m_XTrBot[MAXSPANSTATIONS+1];     /**< the transition location on the bottom surface */
 
     QVector<double> m_FlapMoment;   /**< the flap hinge moments */
 

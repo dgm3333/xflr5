@@ -1538,7 +1538,7 @@ bool WingDlg::VLMSetAutoMesh(int total)
 
     if(!total)
     {
-        size = 2000/4;//why not ? Too much refinement isn't worthwile
+        size = 2000/4;//why not ? Too much refinement isn't worthwhile
         NYTotal = 22;
     }
     else

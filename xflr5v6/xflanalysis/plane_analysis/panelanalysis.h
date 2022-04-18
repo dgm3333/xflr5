@@ -146,7 +146,7 @@ class PanelAnalysis : QObject
         static bool s_bTrefftz;     /**< /true if the forces should be evaluated in the far-field plane rather than by on-body summation of panel forces */
         static bool s_bKeepOutOpp;  /**< true if points with viscous interpolation issues should be stored nonetheless */
 
-        int s_MaxRHSSize;    /**< the max number of RHS points, used for memeory allocation >*/
+        int s_MaxRHSSize;    /**< the max number of RHS points, used for memory allocation >*/
         int m_MaxMatSize;    /**< the size currently allocated for the influence matrix >*/
 
         static int s_MaxWakeIter;                 /**< wake roll-up iteration limit */

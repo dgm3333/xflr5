@@ -734,7 +734,7 @@ c   limage      .true. if image airfoil is present
 c   lgamu       .true. if gamu  arrays exist for current airfoil geometry
 c   lqinu       .true. if qinvu arrays exist for current airfoil geometry
 c   lvisc       .true. if viscous option is invoked
-c   lalfa       .true. if alpha is specifed, .false. if cl is specified
+c   lalfa       .true. if alpha is specified, .false. if cl is specified
 c   lwake       .true. if wake geometry has been calculated
 c   lpacc       .true. if each point calculated is to be saved
 c   lblini      .true. if bl has been initialized

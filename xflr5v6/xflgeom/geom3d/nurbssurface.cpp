@@ -27,7 +27,7 @@
 
 /**
  * The public constructor.
- * @param iAxis defines along which preferred axis the paramater u is directed; v is in the y-direction
+ * @param iAxis defines along which preferred axis the parameter u is directed; v is in the y-direction
  */
 NURBSSurface::NURBSSurface(int iAxis)
 {

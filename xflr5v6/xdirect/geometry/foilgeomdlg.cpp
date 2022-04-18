@@ -353,7 +353,7 @@ void FoilGeomDlg::keyPressEvent(QKeyEvent *pEvent)
 
 void FoilGeomDlg::initDialog()
 {
-    // round values to be consistend to entry field value decimals
+    // round values to be consistent to entry field value decimals
     m_fCamber     = round (m_pMemFoil->camber()     * 10000) / 10000 ;
     m_fThickness  = round (m_pMemFoil->thickness()  * 10000) / 10000 ;
     m_fXCamber    = round (m_pMemFoil->xCamber()    * 10000) / 10000 ;
