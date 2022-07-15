@@ -122,7 +122,7 @@ QSize LegendWt::sizeHint() const
 /**
 * Draws the legend of the polar graphs
 *@param painter the instance of the QPainter object associated to the active view
-*@param the top left postition where the legend is to be drawn
+*@param the top left position where the legend is to be drawn
 *@param the y coordinate of the bottom of the drawing rectangle
 */
 void LegendWt::drawWPolarLegend(QPainter &painter, QPointF place, int bottom)
@@ -203,7 +203,7 @@ void LegendWt::drawWPolarLegend(QPainter &painter, QPointF place, int bottom)
             }
             else
             {
-                // move rigth if outside screen
+                // move right if outside screen
                 place.rx() += LegendWidth;
                 ny=1;
                 painter.setPen(TextPen);
@@ -260,7 +260,7 @@ void LegendWt::drawWPolarLegend(QPainter &painter, QPointF place, int bottom)
 /**
 * Draws the curve legend for the graphs in the operating point view
 * @param painter the instance of the QPainter object associated to the active view
-* @param the top left postition where the legend is to be drawn
+* @param the top left position where the legend is to be drawn
 * @param the y coordinate of the bottom of the drawing rectangle
 */
 void LegendWt::drawPOppGraphLegend(QPainter &painter, QPointF place, double bottom)
@@ -417,7 +417,7 @@ void LegendWt::drawPOppGraphLegend(QPainter &painter, QPointF place, double bott
 /**
 * Draws the legend of the Cp graph
 *@param painter the instance of the QPainter object associated to the active view
-*@param the top left postition where the legend is to be drawn
+*@param the top left position where the legend is to be drawn
 *@param the y coordinate of the bottom of the drawing rectangle
 */
 void LegendWt::drawCpLegend(QPainter &painter, Graph const *pGraph, QPointF place, int bottom)
@@ -481,7 +481,7 @@ void LegendWt::drawCpLegend(QPainter &painter, Graph const *pGraph, QPointF plac
 /**
 * Draws the legend for the time response graph- 4 curves
 *@param painter the instance of the QPainter object associated to the active view
-*@param the top left postition where the legend is to be drawn
+*@param the top left position where the legend is to be drawn
 *@param the y coordinate of the bottom of the drawing rectangle
 */
 void LegendWt::drawStabTimeLegend(QPainter &painter, Graph const *pGraph, QPointF place, int bottom)
@@ -610,7 +610,7 @@ void LegendWt::drawPolarLegend(QPainter &painter, QPointF place, int bottom)
             }
             else if (k>0)
             {
-                // move rigth if less than client bottom area
+                // move right if less than client bottom area
                 place.rx() += LegendWidth;
                 ny=1;
             }

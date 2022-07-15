@@ -249,7 +249,7 @@ double Body::length() const
 
 
 /**
- * Returns the posistion of the Body nose
+ * Returns the position of the Body nose
  * @return the Vector3d which defines the position of the Body nose.
  */
 Vector3d Body::leadingPoint() const
@@ -274,7 +274,7 @@ double Body::getSectionArcLength(double x) const
 {
     //NURBS only
     if(m_LineType==xfl::BODYPANELTYPE) return 0.0;
-    // aproximate arc length, used for inertia estimations
+    // approximate arc length, used for inertia estimations
     double length = 0.0;
     double ux = getu(x);
     Vector3d Pt, Pt1;
@@ -334,7 +334,7 @@ Vector3d Body::Point(double u, double v, bool bRight) const
 /**
  * Returns the value of the longitudinal parameter given the absolute X-position ON the NURBS surface.
  * @param x in input, the longitudinal position
- * @return the longitudinal paramater on the NURBS surface
+ * @return the longitudinal parameter on the NURBS surface
  */
 double Body::getu(double x) const
 {
@@ -343,7 +343,7 @@ double Body::getu(double x) const
 
 /**
  * For a NURBS surface: Given a value of the longitudinal parameter and a vector in the yz plane, returns the
- * value of the hoop paramater for the intersection of a ray originating on the x-axis
+ * value of the hoop parameter for the intersection of a ray originating on the x-axis
  * and directed along the input vector
  * @param u in input, the value of the longitudinal parameter
  * @param r the vector which defines the ray's direction

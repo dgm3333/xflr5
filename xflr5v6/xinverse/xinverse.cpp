@@ -52,7 +52,7 @@
 MainFrame *XInverse::s_pMainFrame;
 inverseviewwt *XInverse::s_p2dWidget;
 
-/** The public contructor */
+/** The public constructor */
 XInverse::XInverse(QWidget *parent)
     : QWidget(parent)
 {
@@ -487,7 +487,7 @@ bool XInverse::execQDES()
 /**
  * Initializes XFoil with the data from the input Foil object
  * @param pFoil a pointer to the Foil object with which to initialize the XFoil object
- * @true if the initialization has been sucessful
+ * @true if the initialization has been successful
  */
 bool XInverse::initXFoil(Foil * pFoil)
 {
@@ -2759,9 +2759,9 @@ void XInverse::setupLayout()
 
 
 /**
- * Performs a smoothing operation of the specification cuve between two end points
+ * Performs a smoothing operation of the specification curve between two end points
  * @param Pos1 the first end point
- * @param Pos2 the seconf end point
+ * @param Pos2 the second end point
  */
 void XInverse::smooth(int Pos1, int Pos2)
 {

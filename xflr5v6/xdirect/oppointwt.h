@@ -102,8 +102,8 @@ class OpPointWt : public QWidget
         bool m_bTransFoil;
         bool m_bTransGraph;
         bool m_bAnimate;
-        bool m_bBL;                /**< true if the Boundary layer shoud be displayed */
-        bool m_bPressure;          /**< true if the pressure distirbution should be displayed */
+        bool m_bBL;                /**< true if the Boundary layer should be displayed */
+        bool m_bPressure;          /**< true if the pressure distribution should be displayed */
         bool m_bNeutralLine;
 
         bool m_bXPressed;                  /**< true if the X key is pressed */

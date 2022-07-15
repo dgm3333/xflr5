@@ -4363,7 +4363,7 @@ bool MainFrame::serializePlaneProject(QDataStream &ar)
     ar << Units::forceUnitIndex();
     ar << Units::momentUnitIndex();
 
-    //Save default Polar data. Not in the Settings, since this is Project dependant
+    //Save default Polar data. Not in the Settings, since this is Project dependent
     if     (WPolarDlg::s_WPolar.polarType()==xfl::FIXEDSPEEDPOLAR) ar<<1;
     else if(WPolarDlg::s_WPolar.polarType()==xfl::FIXEDLIFTPOLAR)  ar<<2;
     else if(WPolarDlg::s_WPolar.polarType()==xfl::FIXEDAOAPOLAR)   ar<<4;
@@ -4743,7 +4743,7 @@ bool MainFrame::serializeProjectXFL(QDataStream &ar, bool bIsStoring)
 
         if(ArchiveFormat==200001)
         {
-            //Load the default Polar data. Not in the Settings, since this is Project dependant
+            //Load the default Polar data. Not in the Settings, since this is Project dependent
             ar >> n;
             switch (n)
             {
@@ -4868,7 +4868,7 @@ bool MainFrame::serializeProjectXFL(QDataStream &ar, bool bIsStoring)
             if(serializeFoilXFL(pFoil, ar, bIsStoring))
             {
                 // delete any former foil with that name - necessary in the case of project insertion to avoid duplication
-                // there is a risk that old plane results are not consisent with the new foil, but difficult to avoid that
+                // there is a risk that old plane results are not consistent with the new foil, but difficult to avoid that
                 Foil *pOldFoil = Objects2d::foil(pFoil->name());
                 if(pOldFoil) Objects2d::deleteFoil(pOldFoil);
                 Objects2d::appendFoil(pFoil);
@@ -5079,7 +5079,7 @@ bool MainFrame::serializeProjectWPA(QDataStream &ar, bool bIsStoring)
         {
             pWPolar = new WPolar;
             bWPolarOK = pWPolar->serializeWPlrWPA(ar, bIsStoring);
-            //force compatibilty
+            //force compatibility
             if(pWPolar->analysisMethod()==xfl::PANEL4METHOD && pWPolar->polarType()==xfl::STABILITYPOLAR)
                 pWPolar->setThinSurfaces(true);
 

@@ -70,7 +70,7 @@ class Planet
 
         //standard orbital elements https://en.wikipedia.org/wiki/Orbital_elements
         double m_a;        // semi-major axis
-        double m_e;        // excentricity
+        double m_e;        // eccentricity
         double m_i;        // inclination
         double m_Omega;    // longitude of the ascending node
         double m_omega;    // argument of periapsis

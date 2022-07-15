@@ -59,7 +59,7 @@ class PlaneTask;
   - stores the results in the OpPoint and Polar objects
   - updates the display in the Miarex view.
 
- The LLTAnalysis class performs the calculation of a signle OpPoint. The loop over a sequence of aoa, Cl, or Re values
+ The LLTAnalysis class performs the calculation of a single OpPoint. The loop over a sequence of aoa, Cl, or Re values
  are performed in the LLAnalysisDlg Class.
 */
 class LLTAnalysisDlg : public QDialog
@@ -109,7 +109,7 @@ class LLTAnalysisDlg : public QDialog
         bool m_bCancel;             /**< true if the user has cancelled the analysis */
         bool m_bFinished;           /**< true if the analysis is completed, false if it is running */
         Graph *m_pIterGraph;         /**< A pointer to the QGraph object where the progress of the iterations are displayed */
-        QPoint m_LegendPlace;       /**< The position where the legend should be diplayed in the output graph */
+        QPoint m_LegendPlace;       /**< The position where the legend should be displayed in the output graph */
         QRect m_ViscRect;           /**< The rectangle in the client area where the graph is displayed */
 
         QString m_strOut;

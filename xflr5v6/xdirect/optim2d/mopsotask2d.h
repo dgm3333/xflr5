@@ -52,7 +52,7 @@ class MOPSOTask2d : public MOPSOTask
 
         double m_HHt2;     /**< t2 parameter of the HH functions */
         int    m_HHn;      /**< number of HH functions to use */
-        double m_HHmax;    /**< the max amplitude of the HH functions - unused and deined by the variable's amplitude*/
+        double m_HHmax;    /**< the max amplitude of the HH functions - unused and denied by the variable's amplitude*/
         double m_Alpha;
 
 };

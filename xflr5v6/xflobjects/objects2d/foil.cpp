@@ -93,7 +93,7 @@ Foil::Foil()
 /**
 * Constructs the position of the foil's mid camber line.
 * Calculates the foil's thickness and camber, if requested.
-*@param bParams true if the max thickness and camber properties shold be calculated
+*@param bParams true if the max thickness and camber properties should be calculated
 */
 void Foil::compMidLine(bool bParams)
 {
@@ -137,7 +137,7 @@ void Foil::compMidLine(bool bParams)
 
 /**
 * Copies the data from an existing foil and maps it to this foil's variables.
-* @param pSrcFoil a pointer to the reference foil from which the data wil be copied
+* @param pSrcFoil a pointer to the reference foil from which the data will be copied
 */
 void Foil::copyFoil(const Foil *pSrcFoil, bool bMetaData)
 {
@@ -760,7 +760,7 @@ int Foil::isPoint(Vector2d const &Real) const
 }
 
 /**
-* Normalizes the base foil's lengh to unity.
+* Normalizes the base foil's length to unity.
 * The current foil's length is modified by the same ratio.
 * @return the foil's former length
 */

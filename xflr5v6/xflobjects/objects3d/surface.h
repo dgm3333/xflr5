@@ -204,7 +204,7 @@ class Surface
         static Panel *s_pPanel;    /**< a pointer to the array of this Surface's panels, This array is a sub-array of the total array.*/
         static Vector3d *s_pNode;   /**< a pointer to the array of this panel nodes.*/
 
-        bool m_bIsInSymPlane;      /**< true if the Surface is positioned in the symetry xz plane defined by y=0. Case of a single fin. */
+        bool m_bIsInSymPlane;      /**< true if the Surface is positioned in the symmetry xz plane defined by y=0. Case of a single fin. */
         bool m_bTEFlap;            /**< true if the Surface has a flap on the trailing edge */
         bool m_bIsLeftSurf;        /**< true if the Surface is built on the left wing */
         bool m_bIsRightSurf;       /**< true if the Surface is built on the right wing */
@@ -223,7 +223,7 @@ class Surface
         xfl::enumPanelDistribution m_YDistType;            /**< the type of distribution along the Surface's y axis */
         int m_NXLead;               /**< the number of panels upstream of the flap, i.e. between the leading edge and the hinge */
         int m_NXFlap;               /**< the number of panels on the flap, i.e. between the hinge and the trailing edge */
-        int m_NElements;            /**< the number of panel elements constructer on this Surface. */
+        int m_NElements;            /**< the number of panel elements constructor on this Surface. */
 
         int m_nFlapNodes;           /**< the number of nodes defined on the trailing edge flap */
         int m_nFlapPanels;          /**< the number of panels defined on the trailing edge flap */

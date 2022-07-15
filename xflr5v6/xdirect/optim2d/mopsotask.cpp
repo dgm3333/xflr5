@@ -105,7 +105,7 @@ void MOPSOTask::onSwarm()
     if(m_Swarm.size()==0 || m_Swarm.size()!=s_PopSize)
     {
         outputMsg("Swarm has not been created\n");
-        postPSOEvent(-1); // notifiy finished
+        postPSOEvent(-1); // notify finished
         moveToThread(QApplication::instance()->thread());
         return;
     }

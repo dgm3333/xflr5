@@ -296,7 +296,7 @@ bool OpPoint::serializeOppWPA(QDataStream &ar, bool bIsStoring, int ArchiveForma
 
     if(bIsStoring)
     {
-        /** deprecated, we dont't store in .wpa format anymore */
+        /** deprecated, we don't store in .wpa format anymore */
     }
     else
     {

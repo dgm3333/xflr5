@@ -84,7 +84,7 @@ int Compare(complex<double> a, complex<double>b)
 /**
 * Bubble sort algorithm for complex numbers
 *@param array the array of complex numbers to sort
-*@param ub the size of the aray
+*@param ub the size of the array
 */
 void ComplexSort(complex<double>*array, int ub)
 {

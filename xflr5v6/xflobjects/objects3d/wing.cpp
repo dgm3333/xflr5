@@ -614,7 +614,7 @@ void Wing::computeBodyAxisInertia()
  * The surfaces are constructed from root to tip, and re-ordered from left tip to right tip
  * One surface object for each of the wing's panels
  * A is the surface's left side, B is the right side
- * @param T the translation to be appied to the wing geometry
+ * @param T the translation to be applied to the wing geometry
  * @param XTilt  the rotation in degrees around the x-axis; used in the case of fins
  * @param YTilt  the rotation in degrees arouns the y-axis; used for wing or elevator tilt
  */
@@ -754,8 +754,8 @@ void Wing::createSurfaces(Vector3d const &T, double XTilt, double YTilt)
 
     // we only need a right wing in the following cases
     //   - if it's an 'ordinary wing'
-    //   - if it's a fin, symetrical about the fuselage x-axis
-    //   - if it's a symetrical double fin
+    //   - if it's a fin, symmetrical about the fuselage x-axis
+    //   - if it's a symmetrical double fin
     if(!m_bIsFin || (m_bIsFin && m_bSymFin) || (m_bIsFin && m_bDoubleFin))
     {
         m_Surface[NSurfaces].m_bIsCenterSurf   = true;//next right center surface
@@ -847,7 +847,7 @@ void Wing::createSurfaces(Vector3d const &T, double XTilt, double YTilt)
         if(m_bDoubleFin)
         {
             NSurfaces*=2;
-            //rotate surfaces symetrically
+            //rotate surfaces symmetrically
             int ns2 = int(NSurfaces/2);
             offset.set(0.0, -T.y, 0.0);
             for(int jSurf=0; jSurf<ns2; jSurf++)
@@ -1030,7 +1030,7 @@ void Wing::computeChords(int NStation, double *chord, double *offset, double *tw
 
 
 /**
-* Copies the gemetrical data from an existing Wing
+* Copies the geometrical data from an existing Wing
 *@param pWing a pointer to the instance of the source Wing object
 */
 void Wing::duplicate(Wing const*pWing)
@@ -1081,7 +1081,7 @@ void Wing::duplicate(Wing const*pWing)
 
 /**
 * Returns the wing's average sweep from root to tip measured at the quarter chord
-* The sweep is calulated as the arctangent of the root and tip quarter-chord points
+* The sweep is calculated as the arctangent of the root and tip quarter-chord points
 *@return the value of the average sweep, in degrees
 */
 double Wing::averageSweep() const
@@ -1323,7 +1323,7 @@ double Wing::yrel(double SpanPos) const
 /**
  * The z-position of a specified absolute span position.
  * Used for moment evaluations in LLT, where the wing is defined as a 2D planform
- * @param y the abolute span position
+ * @param y the absolute span position
  * @return the absolute z-position
  */
 double Wing::zPos(double y) const
@@ -1882,7 +1882,7 @@ void Wing::removeWingSection(int const iSection)
 
 
 /**
- * Inserts a section in the geometry of the wing at a postion identified by its index
+ * Inserts a section in the geometry of the wing at a position identified by its index
  * @param iSection the index of the section
  */
 void Wing::insertSection(int iSection)
@@ -4264,7 +4264,7 @@ uint32_t Wing::exportSTL3dPrintable(QDataStream &outStreamData, QTextStream &out
                                 printOutputStyle outputStyle, float unit)
 {
 
-    // 3d printers expect measurements in mm, no the normal xflr5 SI units, so multiply ouput by 1000
+    // 3d printers expect measurements in mm, no the normal xflr5 SI units, so multiply output by 1000
     unit = 1000;
 
 

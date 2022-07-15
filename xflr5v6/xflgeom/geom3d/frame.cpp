@@ -122,7 +122,7 @@ bool Frame::removePoint(int n)
 
 /**
 *Inserts a new point at a specified index in the array of control points.
-* the point is inserted at a mid position between the two adjacent points, or positioned 1/5 of hte distance of the last two points in the array.
+* the point is inserted at a mid position between the two adjacent points, or positioned 1/5 of the distance of the last two points in the array.
 *@param n the index at which a new points will be inserted
 */
 void Frame::insertPoint(int n)

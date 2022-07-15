@@ -396,9 +396,9 @@ void LLTAnalysis::setBending(double QInf)
 /**
  * Calculates the linear solution to the Lifting line problem, for the given wing geometry and angle of attack.
  * This is the starting point for the non-linear iterations.
- * A simplifying assumtion is that the lift slope is Cl = 2.pi (alpha-alpha0+wahshout) at all positions.
+ * A simplifying assumption is that the lift slope is Cl = 2.pi (alpha-alpha0+wahshout) at all positions.
  * Numerical experiments have shown however that the non-linear LLT converges in roughly the same amount of iterations
- * whatever the initial state, even if random or asymetric.
+ * whatever the initial state, even if random or asymmetric.
  * @param Alpha the angle of attack, in degrees
  * @return true if a linear solution has been set, false otherwise. Should always be true, unless the user has defined some crazy wing configuration. Who knows what a user can do ?
  */

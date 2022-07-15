@@ -199,7 +199,7 @@ class WPolar : public XflObject
         int      m_PolarFormat;        /**< the identification number which references the format used to serialize the data */
 
         xfl::enumBC m_BoundaryCondition;
-        xfl::enumRefDimension  m_ReferenceDim;        /**< Describes the origin of the refernce area : 1 if planform area, else projected area */
+        xfl::enumRefDimension  m_ReferenceDim;        /**< Describes the origin of the reference area : 1 if planform area, else projected area */
 
         QString  m_PlaneName;          /**< the name of the parent wing or plane */
 
@@ -281,7 +281,7 @@ class WPolar : public XflObject
 
         QVector <double>  m_XCpCl;                   /**< XCp.Cl, used in calculation of neutral point position >*/
         QVector <double>  m_SM;                      /**< (XCP-XCmRef)/m.a.c; >*/
-        QVector <double>  m_TCd;                     /**< the total drag coeficient >*/
+        QVector <double>  m_TCd;                     /**< the total drag coefficient >*/
         QVector <double>  m_VCm;                     /**< the viscous Pitching Moment coefficient >*/
         QVector <double>  m_VertPower;               /**< the power for steady horizontal flight = m.g.Vz >*/
         QVector <double>  m_HorizontalPower;         /**< the power for steady horizontal flight = Fx.Vx >*/

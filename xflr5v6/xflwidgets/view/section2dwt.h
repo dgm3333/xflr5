@@ -148,7 +148,7 @@ class Section2dWt : public QWidget
 
         QPointF m_ptOffset;          /**< the foil's leading edge position in screen coordinates */
         QPointF m_ViewportTrans;     /**< the translation of the viewport */
-        QPoint m_PointDown;         /**< the screen point where the last left-click occured */
+        QPoint m_PointDown;         /**< the screen point where the last left-click occurred */
 
         QRect m_ZoomRect;           /**< the user-defined rectangle for zooming in */
 

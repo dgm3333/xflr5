@@ -3739,7 +3739,7 @@ void XDirect::onShowPolarOpps()
 
 
 /**
- * The user has toggled the switch used to define the type of input parameter bewteen aoa, Cl, and Re
+ * The user has toggled the switch used to define the type of input parameter between aoa, Cl, and Re
  */
 void XDirect::onSpec()
 {

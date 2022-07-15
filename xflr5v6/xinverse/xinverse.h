@@ -184,7 +184,7 @@ class XInverse : public QWidget
         Foil *m_pModFoil;           /**< a pointer to the resulting Foil modified by inverse design operations */
         Foil const *m_pOverlayFoil;
 
-        Spline5 m_Spline;            /**< the spline oject to modify the velocity curve */
+        Spline5 m_Spline;            /**< the spline object to modify the velocity curve */
 
         bool m_bXPressed;           /**< true if the 'X' key is pressed */
         bool m_bYPressed;           /**< true if the 'Y' key is pressed */

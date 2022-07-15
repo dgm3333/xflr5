@@ -42,7 +42,7 @@ class CtrlTableDelegate;
 
 /**
 *@class WPolarDlg
-*@brief This class provides the interface dialog box which is used to define or to edit the paramaters of a type 1, 2 or 4 polar.
+*@brief This class provides the interface dialog box which is used to define or to edit the parameters of a type 1, 2 or 4 polar.
 
 * The class uses a static instance of the WPolar class as the default data. 
 * This is so that the next call to the class uses the existing data, and only modifications are required.

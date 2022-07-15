@@ -79,7 +79,7 @@
         <Batch_Analysis_Data>
             <!-- Polar_Type is either 1, 2, 3 or 4-->
             <Polar_Type>1</Polar_Type>
-            <!-- For type 1 to 3 polars, set the field Spec_Alpha to true if runnning a range of aoa,
+            <!-- For type 1 to 3 polars, set the field Spec_Alpha to true if running a range of aoa,
                  or to false if running a range of lift coefficients. -->
 
             <!-- Specify the forced transition locations for the analysis -->

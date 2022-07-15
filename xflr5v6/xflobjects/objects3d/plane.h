@@ -206,7 +206,7 @@ class Plane : public XflObject
         double m_TailVolume;                        /**< the tail volume, i.e lever_arm_elev x Area_Elev / MAC_wing / Area_wing */
         Vector3d m_CoG;                             /**< the position of the CoG */
 
-        Vector3d m_WingLE[MAXWINGS];                /**< the array of the leading edge postion of each Wing */
+        Vector3d m_WingLE[MAXWINGS];                /**< the array of the leading edge position of each Wing */
         double m_WingTiltAngle[MAXWINGS];           /**< the rotation in degrees of each Wing about the y-axis */
         Vector3d m_BodyPos;                         /**< the translation vector to apply to the Body */
 

@@ -15,7 +15,7 @@ You should be able to run it if you copy xflr5_3dprinting.exe from the root of t
 After you run this version you can open your project and select "Export to STL" in the R click menu from the wing name in the Object Explorer (see images below)
 The stl output can be opened in your favorite printing or editing software (Prusa, Blender, etc)
 
-Currently hardcoded only (ie you can only use if you open the source with QT Creater and edit the code yourself):-
+Currently hardcoded only (ie you can only use if you open the source with Qt Creator and edit the code yourself):-
    Spar cutouts or printing (at approx line 4350 in xflr5\xflr5v6\xflobjects\objects3d\wings.cpp)
    Drainage holes for resin printers (just below spars in the code)
 

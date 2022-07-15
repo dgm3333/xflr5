@@ -413,7 +413,7 @@ bool Triangle2d::contains(Vector2d pt, bool bEdgesInside) const
 
 
 /**
- * Determines if the point with ccordinates (x,y) is inside the triangle or not.
+ * Determines if the point with coordinates (x,y) is inside the triangle or not.
  * @param bEdgesInside if true, points on the edges are considered to be inside the triangle
  * @return  true if the point is inside the triangle, false otherwise
  */

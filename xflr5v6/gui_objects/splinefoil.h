@@ -37,7 +37,7 @@
 *@class SplineFoil
 *@brief  The class which defines the splined foil object.
 
-The foil is contructed based on one spline for the upper surface and one spline for the lower surface.
+The foil is constructed based on one spline for the upper surface and one spline for the lower surface.
 */
 class SplineFoil : public XflObject
 {
@@ -92,11 +92,11 @@ class SplineFoil : public XflObject
 
     private:
         bool m_bModified;                /**< false if the SplineFoil has been serialized in its current dtate, false otherwise */
-        bool m_bOutPoints;               /**< true if the ouput line points should be displayed */
+        bool m_bOutPoints;               /**< true if the output line points should be displayed */
         bool m_bCenterLine;              /**< true if the SplineFoil's mean camber line is to be displayed */
         bool m_bSymetric;                /**< true if the SplineFoil is symetric. In which case the lower surface is set as symetric of the upper surface. */
         bool m_bForceCloseLE;            /**< true if the leading end points of the top and bottom spline should be positioned at the same place */
-        bool m_bForceCloseTE;            /**< true if the traling end points of the top and bottom spline should be positioned at the same place */
+        bool m_bForceCloseTE;            /**< true if the trailing end points of the top and bottom spline should be positioned at the same place */
         int m_OutPoints;                 /**< the number of output points with which to draw the SplineFoil. */
 
 

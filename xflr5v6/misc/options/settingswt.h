@@ -105,7 +105,7 @@ class Settings : public QWidget
         static bool s_bStyleSheet;
 
         static xfl::enumTextFileType s_ExportFileType;  /**< Defines if the list separator for the output text files should be a space or a comma. */
-        static Graph s_RefGraph;//Reference setttings
+        static Graph s_RefGraph;//Reference settings
         static QStringList s_colorList;
         static QStringList s_colorNames;
         static bool s_bDontUseNativeDlg;

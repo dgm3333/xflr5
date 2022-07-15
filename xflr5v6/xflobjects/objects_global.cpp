@@ -452,7 +452,7 @@ void xfl::drawFoil(QPainter &painter, Foil const*pFoil, double alpha, double sca
 
 /**
  * Draws the foil's mid line in the client area.
- * @param painter a refernce to the QPainter object on which the foil will be drawn
+ * @param painter a reference to the QPainter object on which the foil will be drawn
  * @param alpha the rotation angle in degrees of the foil
  * @param scalex the scaling factor in the x-direction
  * @param scaley the scaling factor in the y-direction

@@ -1039,7 +1039,7 @@ void PanelAnalysis::createWakeContribution()
 *    - follow the method described in NASA 4023 eq. (44)
 *    - add the wake's doublet contribution to the matrix
 *    - add the potential difference at the trailing edge panels to the RHS ; the potential's origin
-*     is set arbitrarily to the geometrical orgin so that phi = V.dot(WindDirectio) x point_position
+*     is set arbitrarily to the geometrical origin so that phi = V.dot(WindDirectio) x point_position
 * Only a flat wake is considered. Wake roll-up has been tested but did not prove robust enough for implementation.
 */
 void PanelAnalysis::createWakeContribution(double *pWakeContrib, const Vector3d &WindDirection)
@@ -1568,7 +1568,7 @@ void PanelAnalysis::computePlane(double Alpha, double QInf, int qrhs)
 
         if(m_bPointOut) s_bWarning = true;
 
-        if(m_pWPolar->isStabilityPolar()) m_Alpha = m_AlphaEq; // so it is set by default at the end of the analyis
+        if(m_pWPolar->isStabilityPolar()) m_Alpha = m_AlphaEq; // so it is set by default at the end of the analysis
 
         PlaneOpp *pPOpp = createPlaneOpp(m_Cp+qrhs*m_MatSize, Mu, Sigma);
         m_PlaneOppList.append(pPOpp);
@@ -1580,7 +1580,7 @@ void PanelAnalysis::computePlane(double Alpha, double QInf, int qrhs)
 
 
 /**
-* Returns the estimation of the panel's lift coeficient based on the vortex circulation.
+* Returns the estimation of the panel's lift coefficient based on the vortex circulation.
 * @param p the index of the panel
 * @param Gamma the pointer to the array of vortex circulations
 * @param Cp a pointer to the array of resulting panel lift coefficients
@@ -1772,7 +1772,7 @@ void PanelAnalysis::getDoubletDerivative(const int &p, double const*Mu, double &
 
 
 /**
-* Calculates the Cp coefficient on each panel, using hte vortex circulations or the doublet strengths, depending on the analysis method.
+* Calculates the Cp coefficient on each panel, using the vortex circulations or the doublet strengths, depending on the analysis method.
 * @param V0 the first value in the sequence, either aoa for type 1 & 2 polars or velocity for type 4
 * @param VDelta the increment value of the input parameter, either aoa for type 1 & 2 polars or velocity for type 4
 * @param nval the number of values in the sequence
@@ -2653,7 +2653,7 @@ bool PanelAnalysis::controlLoop()
 
 /**
 * Extracts the eigenvalues and eigenvectors from the state matrices.
-* Stores the results in the memeber variables if successful.
+* Stores the results in the member variables if successful.
 * @return true if the extraction was successful.
 */
 bool PanelAnalysis::solveEigenvalues()
@@ -4610,7 +4610,7 @@ void PanelAnalysis::rotateGeomZ(double Beta, Vector3d const &P, int NXWakePanels
  * @param pPanel a pointer to the array of surface panels to be rotated
  * @param pNode  a pointer to the array of mesh nodes to be rotated
  * @param t the value of the control parameter which defines the amount of rotation
- * @param &NCtrls counts tha active controls
+ * @param &NCtrls counts the active controls
  * @param &out the output message for the log file
  * @param bBCOnly, if true, then only the control points and normal vector and rotates; if not,the whole geometry is rotated
  */
@@ -4807,7 +4807,7 @@ void PanelAnalysis::setControlPositions(double t, int &NCtrls, QString &out, boo
 *    \/          \/
 *
 *
-* Returns the velocity greated by a horseshoe vortex with unit circulation at a distant point
+* Returns the velocity created by a horseshoe vortex with unit circulation at a distant point
 *
 * Notes :
 *  - The geometry has been rotated by the sideslip angle, hence, there is no need to align the trailing vortices with sideslip
@@ -4980,7 +4980,7 @@ void PanelAnalysis::VLMCmn(Vector3d const &A, Vector3d const &B, Vector3d const 
 *    TA__________TB
 *
 *
-* Returns the velocity greated by a ring vortex with unit circulation at a distant point
+* Returns the velocity created by a ring vortex with unit circulation at a distant point
 *
 * Notes :
 *  - The geometry has been rotated by the sideslip angle, hence, there is no need to align the trailing vortices with sideslip

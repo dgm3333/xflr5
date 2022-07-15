@@ -152,7 +152,7 @@ bool WingOpp::exportWOpp(QTextStream &out, bool bCSV)
 
 /**
  * Returns the maximum value of the local lift along the span.
- * Used to calibrate the display of the optimal elliptic curve in hte WingOpp graph.
+ * Used to calibrate the display of the optimal elliptic curve in the WingOpp graph.
  * @return the maximum local lift.
 */
 double WingOpp::maxLift() const
