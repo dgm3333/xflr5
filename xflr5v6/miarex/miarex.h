@@ -358,7 +358,7 @@ class Miarex : public QWidget
         bool m_bCurPOppOnly;               /**< true if only the current WOpp is to be displayed */
         bool m_bCurFrameOnly;              /**< true if only the currently selected body frame is to be displayed */
         bool m_bDirichlet;                 /**< true if Dirichlet BC are applied in 3D panel analysis, false if Neumann */
-        bool m_bDownwash;                  /**< true if the arrows represeting downwash are to be displayed on the 3D openGl view */
+        bool m_bDownwash;                  /**< true if the arrows representing downwash are to be displayed on the 3D openGl view */
         bool m_bInitLLTCalc;               /**< true if the LLT parameters should be set to default prior to the analysis. Otherwise, the iterations will start at the results of the previous calculation */
         bool m_bIs2DScaleSet;              /**< true if the 2D scale has been set, false if needs to be reset */
         bool m_bLongitudinal;              /**< true if longitudinal stability results are to be displayed, false if lateral */

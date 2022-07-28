@@ -1525,7 +1525,7 @@ void AFoil::onResetColumnWidths()
 }
 
 /**
- * The user has requested the lanuch of the interface to show or hide the columns of the Foil table.
+ * The user has requested the launch of the interface to show or hide the columns of the Foil table.
  */
 void AFoil::onAFoilTableColumns()
 {

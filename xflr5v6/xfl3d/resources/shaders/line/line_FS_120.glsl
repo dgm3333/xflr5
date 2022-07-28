@@ -1,6 +1,6 @@
 #version 120
 
-uniform int pattern;   // an integer betwween 0 and 0xFFFF representing the bitwise pattern
+uniform int pattern;   // an integer between 0 and 0xFFFF representing the bitwise pattern
 uniform int nPatterns; // the number of patterns/unit length of the viewport, typically 200-300 for good pattern density
 uniform float clipPlane0; // defined in view-space
 uniform int HasUniColor = 1;

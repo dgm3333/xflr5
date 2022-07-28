@@ -151,7 +151,7 @@ class Panel
         Vector3d CtrlPt;            /**< the position of the control point for VLM analysis or 3D/Thin panels analysis */
         Vector3d CollPt;            /**< the collocation point for 3d panel analysis */
         Vector3d VA;                /**< the left end point of the bound quarter-chord vortex on this panel */
-        Vector3d VB;                /**< the rightt end point of the bound quarter-chord vortex on this panel */
+        Vector3d VB;                /**< the right end point of the bound quarter-chord vortex on this panel */
 
         static double s_CoreSize;
 };

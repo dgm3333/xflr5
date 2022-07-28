@@ -7,7 +7,7 @@ in vec2 UV;
 in vec4 FragPosLightSpace;
 in vec4 VSColor;
 
-uniform int HasUniColor = 0; // otherwise the attribut color will be used
+uniform int HasUniColor = 0; // otherwise the attribute color will be used
 uniform vec4 UniformColor;
 uniform int HasTexture = 0;
 uniform int HasShadow = 0;

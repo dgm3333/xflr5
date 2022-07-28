@@ -97,7 +97,7 @@ void Panel::setPanelFrame()
 * @param LA the position of the leading edge left node.
 * @param LB the position of the leading edge right node.
 * @param TA the position of the trailing edge left node.
-* @param TB the position of the trailing edge rightt node.
+* @param TB the position of the trailing edge right node.
 */
 void Panel::setPanelFrame(Vector3d const &LA, Vector3d const &LB, Vector3d const &TA, Vector3d const &TB)
 {

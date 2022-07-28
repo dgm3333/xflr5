@@ -22,7 +22,7 @@ layout+references). There is a sample makefile for unix systems.
 *** Edition ***
 
 The texlive distribution include a tex editor. Most of my colleague
-use texmaker under Windows. I personnaly use emacs+auctex under
+use texmaker under Windows. I personally use emacs+auctex under
 GNU/Linux.
 
 Setup your editor with automatic filling at 80.
