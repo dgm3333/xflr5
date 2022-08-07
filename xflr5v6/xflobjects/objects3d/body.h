@@ -48,7 +48,7 @@ class Triangle3d;
  * This class :
  *     - defines the body object,
  *      - provides the methods for the calculation of the plane's geometric properties,
- *   - porvides methods for the panel calculations.
+ *   - provides methods for the panel calculations.
  * The data is stored in International Standard Units, i.e. meters, kg, and seconds.
  * Angular data is stored in degrees.
  */

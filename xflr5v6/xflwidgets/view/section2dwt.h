@@ -157,7 +157,7 @@ class Section2dWt : public QWidget
         double m_UnitFactor;
         int m_exp_x, m_exp_y;
 
-        bool m_bIsImageLoaded;      /**< true if a backgruond image is loaded */
+        bool m_bIsImageLoaded;      /**< true if a background image is loaded */
         QPixmap m_BackImage;        /**< the QPixmap object with the background image */
 
         static QColor s_BackColor;
